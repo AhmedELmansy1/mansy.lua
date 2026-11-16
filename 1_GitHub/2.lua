@@ -1437,6 +1437,7 @@ end)()
                         if l.LoginUI == d then l.LoginUI = nil end
                     end
                     if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
+                    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
                     destroy(d)
                     return
                 end
@@ -1766,6 +1767,7 @@ end)()
                     L.Authorized=true;L.Key=L.AttemptKey or L.Key;L.Save()
                     destroy(L.LoginUI);L.LoginUI=nil
                     if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
+                    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
                 else L.Authorized=false end
                 L.NeedsUpdate=true
                 local d=L.LoginUI
@@ -7935,12 +7937,13 @@ do
 
     -- Build the Floating Button (FAB)
     local function buildFloatingButton(parentCanvas)
+        local btnW, btnH = 60, 60
         local btnContainer = make("CanvasPanel", parentCanvas)
         local btnSlot = parentCanvas:AddChildToCanvas(btnContainer)
         btnSlot:SetAutoSize(false)
-        btnSlot:SetSize(vec(64, 64))
+        btnSlot:SetSize(vec(btnW, btnH))
 
-        -- Anchor to Top-Left safely with notch offset
+        -- Position comfortably on left screen edge, clear of notch & joystick
         pcall(function()
             local anchors = btnSlot:GetAnchors()
             anchors.Minimum = vec(0.0, 0.0)
@@ -7948,42 +7951,63 @@ do
             btnSlot:SetAnchors(anchors)
             btnSlot:SetAlignment(vec(0.0, 0.0))
         end)
-        btnSlot:SetPosition(vec(70, 140))
+        btnSlot:SetPosition(vec(20, 240))
         btnSlot:SetZOrder(9999)
         visibility(btnContainer, VIS_VISIBLE)
 
-        -- Glow Border (Neon Cyan / Electric Blue)
+        -- Outer Glow Halo (Cyberpunk Neon Cyan)
+        local outerHalo = make("Border", btnContainer)
+        outerHalo:SetBrushColor(color(0, 230, 255, 0.40))
+        visibility(outerHalo, VIS_PASSIVE)
+        local hSlot = btnContainer:AddChildToCanvas(outerHalo)
+        hSlot:SetAutoSize(false); hSlot:SetPosition(vec(0, 0)); hSlot:SetSize(vec(btnW, btnH)); hSlot:SetZOrder(1)
+
+        -- Main Sharp Border
         local border = make("Border", btnContainer)
-        border:SetBrushColor(color(0, 215, 255, 0.95))
+        border:SetBrushColor(color(0, 240, 255, 0.95))
         visibility(border, VIS_PASSIVE)
         local bSlot = btnContainer:AddChildToCanvas(border)
-        bSlot:SetAutoSize(false); bSlot:SetPosition(vec(0, 0)); bSlot:SetSize(vec(64, 64)); bSlot:SetZOrder(1)
+        bSlot:SetAutoSize(false); bSlot:SetPosition(vec(2, 2)); bSlot:SetSize(vec(btnW - 4, btnH - 4)); bSlot:SetZOrder(2)
 
-        -- Inner Dark Obsidian Background
+        -- Inner Obsidian Core
         local inner = make("Border", btnContainer)
-        inner:SetBrushColor(color(10, 16, 28, 0.96))
+        inner:SetBrushColor(color(10, 15, 26, 0.96))
         visibility(inner, VIS_PASSIVE)
         local iSlot = btnContainer:AddChildToCanvas(inner)
-        iSlot:SetAutoSize(false); iSlot:SetPosition(vec(3, 3)); iSlot:SetSize(vec(58, 58)); iSlot:SetZOrder(2)
+        iSlot:SetAutoSize(false); iSlot:SetPosition(vec(4, 4)); iSlot:SetSize(vec(btnW - 8, btnH - 8)); iSlot:SetZOrder(3)
 
-        -- Icon Text
+        -- Lightning Icon
         local icon = make("TextBlock", btnContainer)
         icon:SetText("⚡")
-        styleText(icon, 26, 0, 235, 255, 1.0, true)
+        styleText(icon, 24, 0, 245, 255, 1.0, true)
         visibility(icon, VIS_PASSIVE)
         local tSlot = btnContainer:AddChildToCanvas(icon)
-        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 13)); tSlot:SetSize(vec(36, 36)); tSlot:SetZOrder(3)
+        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 8)); tSlot:SetSize(vec(30, 28)); tSlot:SetZOrder(4)
 
-        -- Click Button
+        -- Mini VIP Badge
+        local badge = make("TextBlock", btnContainer)
+        badge:SetText("VIP")
+        styleText(badge, 9, 0, 230, 255, 1.0, true)
+        visibility(badge, VIS_PASSIVE)
+        local bgSlot = btnContainer:AddChildToCanvas(badge)
+        bgSlot:SetAutoSize(false); bgSlot:SetPosition(vec(21, 38)); bgSlot:SetSize(vec(24, 14)); bgSlot:SetZOrder(5)
+
+        -- Touch Area (Guaranteed Hit-Test via 0.01 opacity & ZOrder 99)
         local clickBtn = make("Button", btnContainer)
-        pcall(function() clickBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+        pcall(function() clickBtn:SetBackgroundColor(color(0, 0, 0, 0.01)) end)
         visibility(clickBtn, VIS_VISIBLE)
         local cSlot = btnContainer:AddChildToCanvas(clickBtn)
-        cSlot:SetAutoSize(false); cSlot:SetPosition(vec(0, 0)); cSlot:SetSize(vec(64, 64)); cSlot:SetZOrder(4)
+        cSlot:SetAutoSize(false); cSlot:SetPosition(vec(0, 0)); cSlot:SetSize(vec(btnW, btnH)); cSlot:SetZOrder(99)
 
-        clickBtn.OnClicked:Add(function()
+        local lastTap = 0
+        local function onFabTap()
+            local now = os.clock()
+            if (now - lastTap) < 0.20 then return end
+            lastTap = now
             M.Toggle()
-        end)
+        end
+        clickBtn.OnClicked:Add(onFabTap)
+        if clickBtn.OnPressed then pcall(function() clickBtn.OnPressed:Add(onFabTap) end) end
 
         M.FloatingBtn = {
             Container = btnContainer,
@@ -8329,21 +8353,17 @@ do
         M.IsOpen = true
         renderTabContent()
         visibility(M.Window.Container, VIS_VISIBLE)
-        M.AnimScale = 0.85
-        M.AnimOpacity = 0.0
-        M.TargetScale = 1.0
-        M.TargetOpacity = 1.0
-        M.IsAnimating = true
-        M.Window.Container:SetRenderScale(vec(0.85, 0.85))
-        pcall(function() M.Window.Container:SetRenderOpacity(0.0) end)
+        M.Window.Container:SetRenderScale(vec(1.0, 1.0))
+        pcall(function() M.Window.Container:SetRenderOpacity(1.0) end)
+        M.IsAnimating = false
     end
 
     function M.Hide()
         if not M.Window or not valid(M.Window.Container) then return end
         M.IsOpen = false
-        M.TargetScale = 0.85
-        M.TargetOpacity = 0.0
-        M.IsAnimating = true
+        visibility(M.Window.Container, VIS_COLLAPSED)
+        pcall(function() M.Window.Container:SetRenderOpacity(0.0) end)
+        M.IsAnimating = false
     end
 
     function M.Toggle()
