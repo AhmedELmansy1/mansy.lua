@@ -10017,7 +10017,14 @@ end)()
         if not d then return end
         d.Visible=false
         if d.Event and d.Handle~=nil then pcall(function() d.Event:Remove(d.Handle) end) end
-        if valid(d.Container) then pcall(function() d.Container:RemoveFromParent() end) end
+        if valid(d.Container) then
+            pcall(function()
+                if UEnums and UEnums.ESlateVisibility and UEnums.ESlateVisibility.Collapsed then
+                    d.Container:SetVisibility(UEnums.ESlateVisibility.Collapsed)
+                end
+                d.Container:RemoveFromParent()
+            end)
+        end
         d.Submit=nil;d.Event=nil;d.Handle=nil;d.Container=nil;d.Parent=nil
         d.Input=nil;d.Button=nil;d.Status=nil;d.Title=nil;d.Detail=nil;d.Hint=nil;d.Design=nil;d.Cache=nil
     end
@@ -10290,22 +10297,61 @@ end)()
             add(button,bx,by,bw,bh,9,true)
             d.Event=button.OnClicked
             d.Handle=d.Event:Add(function()
-                if not d.Visible or d.Busy then return end
+                if not d.Visible then return end
                 if welcome then
                     destroy(d);d.Dismissed=true
                     local l=_G.LunarLoginRuntime;if l and l.WelcomeUI==d then l.WelcomeUI=nil end
                     if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
                     return
                 end
-                local okRead,k=pcall(function() return d.Input:GetText() end)
-                if not okRead or type(k)~="string" then return end
-                k=k:match("^%s*(.-)%s*$")
-                if #k==0 or #k>512 then d.Status:SetText("Enter a valid key");return end
+                local rawK = nil
+                local okRead, resRead = pcall(function() return d.Input:GetText() end)
+                if okRead and resRead ~= nil then rawK = resRead end
+                if rawK == nil then
+                    pcall(function() rawK = d.Input.Text end)
+                end
+                local k = nil
+                if type(rawK) == "string" then
+                    k = rawK
+                elseif rawK ~= nil then
+                    pcall(function()
+                        if type(rawK.ToString) == "function" then k = rawK:ToString() end
+                    end)
+                    if not k then
+                        local okTs, ts = pcall(tostring, rawK)
+                        if okTs and type(ts) == "string" then k = ts end
+                    end
+                end
+                if not k or type(k) ~= "string" then
+                    pcall(function() d.Status:SetText("Please enter a key") end)
+                    return
+                end
+                k = k:match("^%s*(.-)%s*$")
+                if #k == 0 then
+                    pcall(function() d.Status:SetText("Please enter a key") end)
+                    return
+                end
+                if #k > 512 then
+                    pcall(function() d.Status:SetText("Key is too long") end)
+                    return
+                end
+                pcall(function() d.Status:SetText("Verifying key...") end)
                 SaveKeyDirect(k)
                 local l = _G.LunarLoginRuntime
-                if l then l.Key = k end
+                if l then
+                    l.Key = k
+                    l.Pending = false
+                    l.AutoLoginAttempted = true
+                end
                 if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
-                if d.Submit then d.Submit(k) end
+                if d.Submit then
+                    d.Busy = true
+                    local okSub, resSub = pcall(d.Submit, k)
+                    if not okSub then
+                        d.Busy = false
+                        pcall(function() d.Status:SetText("Login error: " .. tostring(resSub)) end)
+                    end
+                end
             end)
             renderArt()
             local slot=p:AddChildToCanvas(d.Container);slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
@@ -10587,7 +10633,25 @@ end)()
             end,
             decode=function(raw) local json=require("common.json_util");return json.decode(raw) end,
             post=function(url,headers,body,callback,timeout)
-                local http=ModuleManager.GetModule(ModuleManager.CommonModuleConfig.http_manager)
+                local ModuleManager = rawget(_G, "ModuleManager")
+                if not ModuleManager then
+                    pcall(function() ModuleManager = require("client.module_framework.ModuleManager") end)
+                end
+                local http = nil
+                if ModuleManager and ModuleManager.GetModule and ModuleManager.CommonModuleConfig then
+                    pcall(function()
+                        http = ModuleManager.GetModule(ModuleManager.CommonModuleConfig.http_manager)
+                    end)
+                end
+                if not http then
+                    pcall(function()
+                        local HM = require("client.slua.logic.http.logic_http_manager")
+                        if HM and HM.GetModule then http = HM:GetModule() end
+                    end)
+                end
+                if not http or type(http.Post) ~= "function" then
+                    return false
+                end
                 L.Diagnostics.HTTP=L.Diagnostics.HTTP+1
                 return http:Post(url,headers,body,nil,callback,timeout)
             end,
@@ -10612,10 +10676,11 @@ end)()
         })
         L.Authorized=L.Auth.IsAuthorized()
         L.Login=function(key)
-            if L.Authorized or L.Pending then return false end
+            if L.Authorized then return true end
+            L.Pending = false
             L.AttemptKey=type(key)=="string" and key:match("^%s*(.-)%s*$") or ""
             local ok,result=pcall(L.Auth.Login,L.AttemptKey)
-            if not ok then L.Status="Login could not start";L.Pending=false;L.NeedsUpdate=true;wake();return false end
+            if not ok then L.Status="Login could not start: "..tostring(result);L.Pending=false;L.NeedsUpdate=true;wake();return false end
             return result
         end
         L.Logout=function()
@@ -17270,6 +17335,9 @@ pcall(function()
     local ticker = require("common.time_ticker")
     if ticker and ticker.AddTimerLoop then
         ticker.AddTimerLoop(0, function()
+            if _G.LunarLoginRuntime and _G.LunarLoginRuntime.Update and _G.LunarLoginRuntime.NeedsUpdate then
+                pcall(_G.LunarLoginRuntime.Update)
+            end
             if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
                 pcall(_G.MansyFloatingMenu.Tick)
             end
