@@ -5006,6 +5006,9 @@ g_masterahsanyt_ESPTick=function()
     ESPShared.Frame.Begin(now)
     local F=_G.LunarFeatures
     if F then F.TimerClock=g_masterahsanyt_ShotESP.TimerClock end
+    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
+        pcall(_G.MansyFloatingMenu.Tick)
+    end
     if not token.RenderDue or now>=token.RenderDue-0.000001 or (token.LastRenderClock and now<token.LastRenderClock) then
         local previous=g_masterahsanyt_ESPDiagnostics.LastTickSeconds
         if previous and now>previous then g_masterahsanyt_ESPDiagnostics.UpdateHz=1/(now-previous) end
@@ -7619,10 +7622,10 @@ end
 _G.LaunchTelegram = LaunchTelegram
 
 do
-    local vectorClass = rawget(_G, "FVector2D") or import("Vector2D")
-    local colorClass = rawget(_G, "FLinearColor") or import("LinearColor")
-    local slateClass = rawget(_G, "FSlateColor") or import("SlateColor")
-    local CGame = import("GameplayStatics")
+    local vectorClass = rawget(_G, "FVector2D") or (pcall(import, "Vector2D") and import("Vector2D"))
+    local colorClass = rawget(_G, "FLinearColor") or (pcall(import, "LinearColor") and import("LinearColor"))
+    local slateClass = rawget(_G, "FSlateColor") or (pcall(import, "SlateColor") and import("SlateColor"))
+    local CGame = rawget(_G, "CGame") or (pcall(import, "GameplayStatics") and import("GameplayStatics")) or _G
     local UEnums = _ENV.UEnums or rawget(_G, "UEnums") or (pcall(import, "UEnums") and import("UEnums"))
     local enums = (UEnums and UEnums.ESlateVisibility) or {
         Visible = 0,
@@ -7706,6 +7709,15 @@ do
     end
 
     local function getActiveCanvas()
+        -- 0. Check live active ESP canvas first (already rendering in-game)
+        if _G.g_masterahsanyt_ShotESP and valid(_G.g_masterahsanyt_ShotESP.Canvas) then
+            return _G.g_masterahsanyt_ShotESP.Canvas
+        end
+        if g_masterahsanyt_ESPGetCanvas then
+            local okEsp, espC = pcall(g_masterahsanyt_ESPGetCanvas)
+            if okEsp and valid(espC) then return espC end
+        end
+
         -- 1. In-Game Main UI
         local ok1, tools = pcall(require, "GameLua.Mod.BaseMod.Common.UI.InGameUITools")
         if ok1 and tools and type(tools.GetMainControlBaseUI) == "function" then
@@ -7979,18 +7991,18 @@ do
         -- Lightning Icon
         local icon = make("TextBlock", btnContainer)
         icon:SetText("⚡")
-        styleText(icon, 24, 0, 245, 255, 1.0, true)
+        styleText(icon, 26, 0, 245, 255, 1.0, true)
         visibility(icon, VIS_PASSIVE)
         local tSlot = btnContainer:AddChildToCanvas(icon)
-        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 8)); tSlot:SetSize(vec(30, 28)); tSlot:SetZOrder(4)
+        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(17, 8)); tSlot:SetSize(vec(30, 28)); tSlot:SetZOrder(4)
 
         -- Mini VIP Badge
         local badge = make("TextBlock", btnContainer)
-        badge:SetText("VIP")
+        badge:SetText("MENU")
         styleText(badge, 9, 0, 230, 255, 1.0, true)
         visibility(badge, VIS_PASSIVE)
         local bgSlot = btnContainer:AddChildToCanvas(badge)
-        bgSlot:SetAutoSize(false); bgSlot:SetPosition(vec(21, 38)); bgSlot:SetSize(vec(24, 14)); bgSlot:SetZOrder(5)
+        bgSlot:SetAutoSize(false); bgSlot:SetPosition(vec(15, 38)); bgSlot:SetSize(vec(32, 14)); bgSlot:SetZOrder(5)
 
         -- Touch Area (Guaranteed Hit-Test via 0.01 opacity & ZOrder 99)
         local clickBtn = make("Button", btnContainer)
@@ -8375,6 +8387,9 @@ do
     end
 
     function M.Tick()
+        local now = (os and os.clock) and os.clock() or 0
+        if (now - (M.LastTick or 0)) < 0.04 then return end
+        M.LastTick = now
         local auth = _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized
         if not auth then
             if M.FloatingBtn and valid(M.FloatingBtn.Container) then
@@ -8555,6 +8570,7 @@ end
 g_masterahsanyt_FastTick()
 g_masterahsanyt_StartSettingsMaintenance()
 g_masterahsanyt_ShotESP.Running=true
+if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
 g_masterahsanyt_ESPTick()
 end
 local ok,startError=pcall(startBaselineHacks)
