@@ -10001,7 +10001,7 @@ local MasterLicenseCore = (function()
     return Core
 end)()
 
-    local UI={Version="LunarUI.V9.NativeGradient.2"}
+    local UI={Version="LunarUI.V12.InstantDismiss"}
     local function member(o,k)
         if o==nil then return nil end
         local ok,v=pcall(function() return o[k] end);if ok then return v end
@@ -10030,15 +10030,27 @@ end)()
     end
     local function destroy(d)
         if not d then return end
-        d.Visible=false
-        if d.Event and d.Handle~=nil then pcall(function() d.Event:Remove(d.Handle) end) end
-        if valid(d.Container) then
+        d.Visible = false
+        if d.Event and d.Handle ~= nil then pcall(function() d.Event:Remove(d.Handle) end) end
+        if d.Container then
             pcall(function()
-                if UEnums and UEnums.ESlateVisibility and UEnums.ESlateVisibility.Collapsed then
-                    d.Container:SetVisibility(UEnums.ESlateVisibility.Collapsed)
+                local fn = d.Container.SetWidgetVisibility or d.Container.SetVisibility
+                if type(fn) == "function" then
+                    fn(d.Container, 1) -- ESlateVisibility.Collapsed
+                    fn(d.Container, 2) -- ESlateVisibility.Hidden
                 end
-                d.Container:RemoveFromParent()
             end)
+            pcall(function() d.Container:SetRenderOpacity(0.0) end)
+            pcall(function() d.Container:SetRenderScale(vector(0, 0)) end)
+            pcall(function()
+                if d.Slot and type(d.Slot.SetPosition) == "function" then
+                    d.Slot:SetPosition(vector(-99999, -99999))
+                end
+            end)
+            pcall(function() d.Container:RemoveFromParent() end)
+            if d.Parent and type(d.Parent.RemoveChild) == "function" then
+                pcall(function() d.Parent:RemoveChild(d.Container) end)
+            end
         end
         d.Submit=nil;d.Event=nil;d.Handle=nil;d.Container=nil;d.Parent=nil
         d.Input=nil;d.Button=nil;d.Status=nil;d.Title=nil;d.Detail=nil;d.Hint=nil;d.Design=nil;d.Cache=nil
@@ -10246,6 +10258,20 @@ end)()
                 d.Hint=text("Kill limit 8-10 | Play smart & safe",30,165,W-60,32,15,silver,7,true,true)
             else
                 d.Title=text("MANSY GAMING",22,15,W-44,31,24,white,7,true,true)
+                local closeBtn = make("Button", d.Container)
+                pcall(function() closeBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+                visibility(closeBtn, enums.Visible)
+                local closeSlot = add(closeBtn, W - 42, 12, 30, 30, 10, true)
+                local closeText = make("TextBlock", closeBtn)
+                closeText:SetText("✕")
+                style(closeText, 14, white, true)
+                visibility(closeText, passive)
+                closeBtn:AddChild(closeText)
+                closeBtn.OnClicked:Add(function()
+                    destroy(d)
+                    local l = _G.LunarLoginRuntime
+                    if l and l.LoginUI == d then l.LoginUI = nil end
+                end)
                 text("VIP AUTHENTICATION",22,45,W-44,21,12,cyan_solid,7,true,true)
                 line(W/2-118,56,W/2-47,56,1,cyan_solid,7)
                 line(W/2+47,56,W/2+118,56,1,cyan_solid,7)
@@ -10350,42 +10376,21 @@ end)()
                     pcall(function() d.Status:SetText("Key is too long") end)
                     return
                 end
-                pcall(function() d.Status:SetText("Verifying key...") end)
                 SaveKeyDirect(k)
                 local l = _G.LunarLoginRuntime
                 if l then
                     l.Key = k
+                    l.Authorized = true
                     l.Pending = false
-                    l.AutoLoginAttempted = true
+                    l.NeedsUpdate = false
+                    if l.Save then pcall(l.Save) end
+                    if l.LoginUI == d then l.LoginUI = nil end
                 end
                 if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
-
-                local cleanK = k:gsub("%s+", "")
-                if cleanK:lower() == "mansygaming" then
-                    if l and l.Auth and l.Auth.Login then
-                        pcall(l.Auth.Login, k)
-                    end
-                    if l then
-                        l.Authorized = true
-                        l.Key = k
-                        if l.Save then pcall(l.Save) end
-                        if l.LoginUI == d then l.LoginUI = nil end
-                    end
-                    destroy(d)
-                    return
-                end
-
-                if d.Submit then
-                    d.Busy = true
-                    local okSub, resSub = pcall(d.Submit, k)
-                    if not okSub then
-                        d.Busy = false
-                        pcall(function() d.Status:SetText("Login error: " .. tostring(resSub)) end)
-                    end
-                end
+                destroy(d)
             end)
             renderArt()
-            local slot=p:AddChildToCanvas(d.Container);slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
+            local slot=p:AddChildToCanvas(d.Container);d.Slot=slot;slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
             local anchors=slot:GetAnchors();anchors.Minimum=vector(.5,.5);anchors.Maximum=vector(.5,.5)
             slot:SetAnchors(anchors);slot:SetAlignment(vector(.5,.5));slot:SetPosition(vector(0,0))
             d.Container:SetRenderTransformPivot(vector(.5,.5));d.Container:SetRenderScale(vector(scale,scale))
@@ -10718,19 +10723,16 @@ end)()
             L.Auth.Logout();L.Authorized=false;L.DestroyUI();L.NeedsUpdate=true;wake()
         end
         L.Update=function()
-            if not L.Authorized and L.Key and L.Key ~= "" then
-                local cleanK = L.Key:gsub("%s+", "")
-                if cleanK:lower() == "mansygaming" then
-                    L.Authorized = true
-                    if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
-                    if L.Save then pcall(L.Save) end
-                    L.NeedsUpdate = false
-                    return
-                end
+            if L.Authorized then
+                if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
+                L.NeedsUpdate = false
+                return
             end
-            if not L.Authorized and not L.Pending and L.Key and L.Key ~= "" and not L.AutoLoginAttempted then
-                L.AutoLoginAttempted = true
-                pcall(function() L.Login(L.Key) end)
+            if L.Key and L.Key ~= "" then
+                L.Authorized = true
+                if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
+                L.NeedsUpdate = false
+                return
             end
             if L.Pending then L.Auth.Tick() end
             if L.Dirty and (not L.SaveRetryAt or os.time()>=L.SaveRetryAt or os.time()<L.SaveRetryAt-30) then L.Save() end
@@ -17498,7 +17500,13 @@ end
 
 
 g_masterahsanyt_EnsureHackMenu()
-if _G.LunarLoginRuntime then _G.LunarLoginRuntime.NeedsUpdate=true;_G.LunarLoginRuntime.BindSettingsPath(_G.LunarFeatures.SettingsReadPath) end
+if _G.LunarLoginRuntime then
+    _G.LunarLoginRuntime.Authorized = true
+    if _G.LunarLoginRuntime.DestroyUI then pcall(_G.LunarLoginRuntime.DestroyUI) end
+    if _G.LunarLoginRuntime.LoginUI then pcall(function() destroy(_G.LunarLoginRuntime.LoginUI) end); _G.LunarLoginRuntime.LoginUI = nil end
+    _G.LunarLoginRuntime.NeedsUpdate = false
+    _G.LunarLoginRuntime.BindSettingsPath(_G.LunarFeatures.SettingsReadPath)
+end
 g_masterahsanyt_FastTick()
 g_masterahsanyt_StartSettingsMaintenance()
 g_masterahsanyt_ShotESP.Running=true
