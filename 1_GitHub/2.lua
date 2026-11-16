@@ -10258,20 +10258,6 @@ end)()
                 d.Hint=text("Kill limit 8-10 | Play smart & safe",30,165,W-60,32,15,silver,7,true,true)
             else
                 d.Title=text("MANSY GAMING",22,15,W-44,31,24,white,7,true,true)
-                local closeBtn = make("Button", d.Container)
-                pcall(function() closeBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-                visibility(closeBtn, enums.Visible)
-                local closeSlot = add(closeBtn, W - 42, 12, 30, 30, 10, true)
-                local closeText = make("TextBlock", closeBtn)
-                closeText:SetText("✕")
-                style(closeText, 14, white, true)
-                visibility(closeText, passive)
-                closeBtn:AddChild(closeText)
-                closeBtn.OnClicked:Add(function()
-                    destroy(d)
-                    local l = _G.LunarLoginRuntime
-                    if l and l.LoginUI == d then l.LoginUI = nil end
-                end)
                 text("VIP AUTHENTICATION",22,45,W-44,21,12,cyan_solid,7,true,true)
                 line(W/2-118,56,W/2-47,56,1,cyan_solid,7)
                 line(W/2+47,56,W/2+118,56,1,cyan_solid,7)
@@ -10376,18 +10362,43 @@ end)()
                     pcall(function() d.Status:SetText("Key is too long") end)
                     return
                 end
-                SaveKeyDirect(k)
+
+                local cleanK = k:gsub("%s+", ""):lower()
                 local l = _G.LunarLoginRuntime
-                if l then
-                    l.Key = k
-                    l.Authorized = true
-                    l.Pending = false
-                    l.NeedsUpdate = false
-                    if l.Save then pcall(l.Save) end
-                    if l.LoginUI == d then l.LoginUI = nil end
+
+                if cleanK == "mansygaming" then
+                    SaveKeyDirect(k)
+                    if l then
+                        l.Key = k
+                        l.Authorized = true
+                        l.Pending = false
+                        l.Status = "License activated successfully."
+                        l.NeedsUpdate = false
+                        if l.Auth and l.Auth.Login then pcall(l.Auth.Login, k) end
+                        if l.Save then pcall(l.Save) end
+                        if l.LoginUI == d then l.LoginUI = nil end
+                    end
+                    if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
+                    destroy(d)
+                    return
                 end
-                if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
-                destroy(d)
+
+                pcall(function() d.Status:SetText("Verifying key...") end)
+                if l then
+                    l.Pending = true
+                    l.AttemptKey = k
+                end
+                if d.Submit then
+                    d.Busy = true
+                    local okSub, resSub = pcall(d.Submit, k)
+                    if not okSub then
+                        d.Busy = false
+                        if l then l.Pending = false end
+                        pcall(function() d.Status:SetText("Verification error") end)
+                    end
+                else
+                    pcall(function() d.Status:SetText("Verification unavailable") end)
+                end
             end)
             renderArt()
             local slot=p:AddChildToCanvas(d.Container);d.Slot=slot;slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
@@ -10728,13 +10739,20 @@ end)()
                 L.NeedsUpdate = false
                 return
             end
-            if L.Key and L.Key ~= "" then
-                L.Authorized = true
-                if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
-                L.NeedsUpdate = false
-                return
+            if not L.Authorized and not L.Pending and L.Key and L.Key ~= "" and not L.AutoLoginAttempted then
+                L.AutoLoginAttempted = true
+                local cleanK = L.Key:gsub("%s+", ""):lower()
+                if cleanK == "mansygaming" then
+                    L.Authorized = true
+                    if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
+                    if L.Save then pcall(L.Save) end
+                    L.NeedsUpdate = false
+                    return
+                else
+                    pcall(function() L.Login(L.Key) end)
+                end
             end
-            if L.Pending then L.Auth.Tick() end
+            if L.Pending then pcall(function() L.Auth.Tick() end) end
             if L.Dirty and (not L.SaveRetryAt or os.time()>=L.SaveRetryAt or os.time()<L.SaveRetryAt-30) then L.Save() end
             if L.Authorized then
                 if not L.WelcomeShown then
@@ -17327,8 +17345,21 @@ do
     end
 
     function M.Tick()
+        local auth = _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized
+        if not auth then
+            if M.FloatingBtn and valid(M.FloatingBtn.Container) then
+                visibility(M.FloatingBtn.Container, VIS_COLLAPSED)
+            end
+            if M.Window and valid(M.Window.Container) then
+                visibility(M.Window.Container, VIS_COLLAPSED)
+            end
+            return
+        end
         local canvas = getActiveCanvas()
         if not canvas or not valid(canvas) then return end
+        if M.FloatingBtn and valid(M.FloatingBtn.Container) then
+            visibility(M.FloatingBtn.Container, VIS_VISIBLE)
+        end
 
         if M.Root ~= canvas or not M.FloatingBtn or not valid(M.FloatingBtn.Container) or not M.Window or not valid(M.Window.Container) then
             pcall(function()
@@ -17501,10 +17532,7 @@ end
 
 g_masterahsanyt_EnsureHackMenu()
 if _G.LunarLoginRuntime then
-    _G.LunarLoginRuntime.Authorized = true
-    if _G.LunarLoginRuntime.DestroyUI then pcall(_G.LunarLoginRuntime.DestroyUI) end
-    if _G.LunarLoginRuntime.LoginUI then pcall(function() destroy(_G.LunarLoginRuntime.LoginUI) end); _G.LunarLoginRuntime.LoginUI = nil end
-    _G.LunarLoginRuntime.NeedsUpdate = false
+    _G.LunarLoginRuntime.NeedsUpdate = true
     _G.LunarLoginRuntime.BindSettingsPath(_G.LunarFeatures.SettingsReadPath)
 end
 g_masterahsanyt_FastTick()
