@@ -5159,7 +5159,7 @@ local AimV2,AimGameplayStatics,AimMath,AimUI
 pcall(function() AimV2=import("Vector2D") end)
 pcall(function() AimGameplayStatics=import("GameplayStatics") end)
 pcall(function() AimMath=import("KismetMathLibrary") end)
-pcall(function() AimUI=require("client.common.ui_util") end)
+pcall(function() AimUI=require("client.common.logic_enter_game") end)
 _G.XthrlenConfig = _G.XthrlenConfig or {}
 _G.XthrlenState = _G.XthrlenState or {}
 _G.XthrlenState.CustomTextData = _G.XthrlenState.CustomTextData or {}
@@ -5402,10 +5402,10 @@ _G.AimTouch = function()
         local camLoc = camManager:GetCameraLocation()
         if not camLoc then return end
         
-        local ui_util = AimUI
-        if not ui_util then return end
+        local logic_enter_game = AimUI
+        if not logic_enter_game then return end
         
-        local viewportSize = ui_util.GetViewportSize()
+        local viewportSize = logic_enter_game.GetViewportSize()
         if not viewportSize then return end
         
         local centerX = viewportSize.X * 0.5
