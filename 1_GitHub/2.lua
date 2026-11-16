@@ -435,7 +435,6 @@ end -- V9.5 integration: exported callback retains the scoped helpers.
 -- Immediate bypass attempt on script load (in case a pawn is already present).
 if Client and _G._BYPASS_Execute then pcall(_G._BYPASS_Execute) end
 
-
 _G.LexusConfig = _G.LexusConfig or {}
 _G.LexusConfig.IpadView = _G.LexusConfig.IpadView or false
 _G.LexusState = _G.LexusState or {}
@@ -809,18 +808,7 @@ local MasterLicenseCore = (function()
             return v, finite(v) and v > 0 and v % 1 == 0
         end
         local function begin(key)
-            if restartRequired then return false end
-            pending = nil
-            if type(key) ~= 'string' then key = '' end
-            local cleanKey = key:gsub("%s+", "")
-            if cleanKey:lower() == "mansygaming" then
-                allowed = true
-                expiresAt = os.time() + (30 * 86400)
-                saveSession(expiresAt)
-                if not startPayload() then return end
-                notify('License activated successfully.', 'active')
-                return true
-            end
+            if restartRequired or pending then return false end
             if localExpiry then
                 local ok, text, state = localExpiry.Status()
                 if not ok then revoke(text, state); return false end
@@ -979,11 +967,7 @@ local MasterLicenseCore = (function()
             end
             return true
         end
-        function A.Login(key)
-            if allowed then return true end
-            pending = nil
-            return begin(key)
-        end
+        function A.Login(key) if allowed then return false end; return begin(key) end
         function A.Tick()
             if not pending then return end
             local now, world = readClock()
@@ -1059,7 +1043,7 @@ local MasterLicenseCore = (function()
     return Core
 end)()
 
-    local UI={Version="LunarUI.V12.InstantDismiss"}
+    local UI={Version="LunarUI.V9.NativeGradient.2"}
     local function member(o,k)
         if o==nil then return nil end
         local ok,v=pcall(function() return o[k] end);if ok then return v end
@@ -1088,28 +1072,9 @@ end)()
     end
     local function destroy(d)
         if not d then return end
-        d.Visible = false
-        if d.Event and d.Handle ~= nil then pcall(function() d.Event:Remove(d.Handle) end) end
-        if d.Container then
-            pcall(function()
-                local fn = d.Container.SetWidgetVisibility or d.Container.SetVisibility
-                if type(fn) == "function" then
-                    fn(d.Container, 1) -- ESlateVisibility.Collapsed
-                    fn(d.Container, 2) -- ESlateVisibility.Hidden
-                end
-            end)
-            pcall(function() d.Container:SetRenderOpacity(0.0) end)
-            pcall(function() d.Container:SetRenderScale(vector(0, 0)) end)
-            pcall(function()
-                if d.Slot and type(d.Slot.SetPosition) == "function" then
-                    d.Slot:SetPosition(vector(-99999, -99999))
-                end
-            end)
-            pcall(function() d.Container:RemoveFromParent() end)
-            if d.Parent and type(d.Parent.RemoveChild) == "function" then
-                pcall(function() d.Parent:RemoveChild(d.Container) end)
-            end
-        end
+        d.Visible=false
+        if d.Event and d.Handle~=nil then pcall(function() d.Event:Remove(d.Handle) end) end
+        if valid(d.Container) then pcall(function() d.Container:RemoveFromParent() end) end
         d.Submit=nil;d.Event=nil;d.Handle=nil;d.Container=nil;d.Parent=nil
         d.Input=nil;d.Button=nil;d.Status=nil;d.Title=nil;d.Detail=nil;d.Hint=nil;d.Design=nil;d.Cache=nil
     end
@@ -1382,85 +1347,20 @@ end)()
             add(button,bx,by,bw,bh,9,true)
             d.Event=button.OnClicked
             d.Handle=d.Event:Add(function()
-                if not d.Visible then return end
+                if not d.Visible or d.Busy then return end
                 if welcome then
                     destroy(d);d.Dismissed=true
                     local l=_G.LunarLoginRuntime;if l and l.WelcomeUI==d then l.WelcomeUI=nil end
-                    if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
                     return
                 end
-                local rawK = nil
-                local okRead, resRead = pcall(function() return d.Input:GetText() end)
-                if okRead and resRead ~= nil then rawK = resRead end
-                if rawK == nil then
-                    pcall(function() rawK = d.Input.Text end)
-                end
-                local k = nil
-                if type(rawK) == "string" then
-                    k = rawK
-                elseif rawK ~= nil then
-                    pcall(function()
-                        if type(rawK.ToString) == "function" then k = rawK:ToString() end
-                    end)
-                    if not k then
-                        local okTs, ts = pcall(tostring, rawK)
-                        if okTs and type(ts) == "string" then k = ts end
-                    end
-                end
-                if not k or type(k) ~= "string" then
-                    pcall(function() d.Status:SetText("Please enter a key") end)
-                    return
-                end
-                k = k:match("^%s*(.-)%s*$")
-                if #k == 0 then
-                    pcall(function() d.Status:SetText("Please enter a key") end)
-                    return
-                end
-                if #k > 512 then
-                    pcall(function() d.Status:SetText("Key is too long") end)
-                    return
-                end
-
-                local cleanK = k:gsub("%s+", ""):lower()
-                local l = _G.LunarLoginRuntime
-
-                if cleanK == "mansygaming" then
-                    SaveKeyDirect(k)
-                    if l then
-                        l.Key = k
-                        l.Authorized = true
-                        l.Pending = false
-                        l.Status = "License activated successfully."
-                        l.NeedsUpdate = false
-                        if l.Auth and l.Auth.Login then pcall(l.Auth.Login, k) end
-                        if l.Save then pcall(l.Save) end
-                        if l.LoginUI == d then l.LoginUI = nil end
-                    end
-                    if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
-                    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
-                    destroy(d)
-                    return
-                end
-
-                pcall(function() d.Status:SetText("Verifying key...") end)
-                if l then
-                    l.Pending = true
-                    l.AttemptKey = k
-                end
-                if d.Submit then
-                    d.Busy = true
-                    local okSub, resSub = pcall(d.Submit, k)
-                    if not okSub then
-                        d.Busy = false
-                        if l then l.Pending = false end
-                        pcall(function() d.Status:SetText("Verification error") end)
-                    end
-                else
-                    pcall(function() d.Status:SetText("Verification unavailable") end)
-                end
+                local okRead,k=pcall(function() return d.Input:GetText() end)
+                if not okRead or type(k)~="string" then return end
+                k=k:match("^%s*(.-)%s*$")
+                if #k==0 or #k>512 then d.Status:SetText("Enter a valid key");return end
+                if d.Submit then d.Submit(k) end
             end)
             renderArt()
-            local slot=p:AddChildToCanvas(d.Container);d.Slot=slot;slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
+            local slot=p:AddChildToCanvas(d.Container);slot:SetAutoSize(false);slot:SetSize(vector(W,H));slot:SetZOrder(9200)
             local anchors=slot:GetAnchors();anchors.Minimum=vector(.5,.5);anchors.Maximum=vector(.5,.5)
             slot:SetAnchors(anchors);slot:SetAlignment(vector(.5,.5));slot:SetPosition(vector(0,0))
             d.Container:SetRenderTransformPivot(vector(.5,.5));d.Container:SetRenderScale(vector(scale,scale))
@@ -1548,60 +1448,6 @@ end)()
             for _,path in ipairs(paths) do add(path) end
             return list
         end
-        
-    local function SaveKeyDirect(key)
-        if type(key) ~= "string" then return end
-        key = key:match("^%s*(.-)%s*$")
-        if #key == 0 or #key > 512 then return end
-        local paths = {
-            "ShadowTrackerExtra/Saved/SaveGames/MansySavedKey.txt",
-            "Saved/SaveGames/MansySavedKey.txt",
-            "//storage/emulated/0/Download/MansySavedKey.txt",
-            "/storage/emulated/0/Download/MansySavedKey.txt",
-            "/sdcard/Download/MansySavedKey.txt",
-            "MansySavedKey.txt"
-        }
-        for _, p in ipairs(paths) do
-            pcall(function()
-                local f = io.open(p, "w")
-                if f then
-                    f:write(key)
-                    f:flush()
-                    f:close()
-                end
-            end)
-        end
-    end
-
-    local function LoadKeyDirect()
-        local paths = {
-            "ShadowTrackerExtra/Saved/SaveGames/MansySavedKey.txt",
-            "Saved/SaveGames/MansySavedKey.txt",
-            "//storage/emulated/0/Download/MansySavedKey.txt",
-            "/storage/emulated/0/Download/MansySavedKey.txt",
-            "/sdcard/Download/MansySavedKey.txt",
-            "MansySavedKey.txt"
-        }
-        for _, p in ipairs(paths) do
-            local ok, key = pcall(function()
-                local f = io.open(p, "r")
-                if f then
-                    local s = f:read("*a")
-                    f:close()
-                    if type(s) == "string" then
-                        s = s:match("^%s*(.-)%s*$")
-                        if #s > 0 and #s < 512 then return s end
-                    end
-                end
-                return nil
-            end)
-            if ok and key and type(key) == "string" and #key > 0 then
-                return key
-            end
-        end
-        return nil
-    end
-
         local function recover()
             if L.IdentityPinned then return true end
             local identities,legacy,issues={},{},{}
@@ -1647,12 +1493,6 @@ end)()
             if #issues>0 then
                 L.IdentityError="DEVICE_CACHE_RECOVERY_REQUIRED";L.Diagnostics.Identity="recovery_required";return false
             end
-            if not L.Key or L.Key == "" then
-                local directKey = LoadKeyDirect()
-                if directKey and directKey ~= "" then
-                    L.Key = directKey
-                end
-            end
             L.IdentityError=nil;L.Diagnostics.Identity="new_install";return true
         end
         local function payload(key,seed)
@@ -1670,9 +1510,8 @@ end)()
             return result~=nil and result.Checked and result.Seed==seed and result.Key==key
         end
         L.Save=function()
-            local key=L.AttemptKey or L.Key
-            if key and key ~= "" then SaveKeyDirect(key) end
             if L.Seed=="" or L.IdentityError then return false end
+            local key=L.AttemptKey or L.Key
             local data=payload(key,L.Seed)
             local preferred=candidates()
             for _,base in ipairs(preferred) do
@@ -1739,25 +1578,7 @@ end)()
             end,
             decode=function(raw) local json=require("common.json_util");return json.decode(raw) end,
             post=function(url,headers,body,callback,timeout)
-                local ModuleManager = rawget(_G, "ModuleManager")
-                if not ModuleManager then
-                    pcall(function() ModuleManager = require("client.module_framework.ModuleManager") end)
-                end
-                local http = nil
-                if ModuleManager and ModuleManager.GetModule and ModuleManager.CommonModuleConfig then
-                    pcall(function()
-                        http = ModuleManager.GetModule(ModuleManager.CommonModuleConfig.http_manager)
-                    end)
-                end
-                if not http then
-                    pcall(function()
-                        local HM = require("client.slua.logic.http.logic_http_manager")
-                        if HM and HM.GetModule then http = HM:GetModule() end
-                    end)
-                end
-                if not http or type(http.Post) ~= "function" then
-                    return false
-                end
+                local http=ModuleManager.GetModule(ModuleManager.CommonModuleConfig.http_manager)
                 L.Diagnostics.HTTP=L.Diagnostics.HTTP+1
                 return http:Post(url,headers,body,nil,callback,timeout)
             end,
@@ -1766,8 +1587,6 @@ end)()
                 if phase=="active" then
                     L.Authorized=true;L.Key=L.AttemptKey or L.Key;L.Save()
                     destroy(L.LoginUI);L.LoginUI=nil
-                    if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
-                    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
                 else L.Authorized=false end
                 L.NeedsUpdate=true
                 local d=L.LoginUI
@@ -1783,36 +1602,17 @@ end)()
         })
         L.Authorized=L.Auth.IsAuthorized()
         L.Login=function(key)
-            if L.Authorized then return true end
-            L.Pending = false
+            if L.Authorized or L.Pending then return false end
             L.AttemptKey=type(key)=="string" and key:match("^%s*(.-)%s*$") or ""
             local ok,result=pcall(L.Auth.Login,L.AttemptKey)
-            if not ok then L.Status="Login could not start: "..tostring(result);L.Pending=false;L.NeedsUpdate=true;wake();return false end
+            if not ok then L.Status="Login could not start";L.Pending=false;L.NeedsUpdate=true;wake();return false end
             return result
         end
         L.Logout=function()
             L.Auth.Logout();L.Authorized=false;L.DestroyUI();L.NeedsUpdate=true;wake()
         end
         L.Update=function()
-            if L.Authorized then
-                if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
-                L.NeedsUpdate = false
-                return
-            end
-            if not L.Authorized and not L.Pending and L.Key and L.Key ~= "" and not L.AutoLoginAttempted then
-                L.AutoLoginAttempted = true
-                local cleanK = L.Key:gsub("%s+", ""):lower()
-                if cleanK == "mansygaming" then
-                    L.Authorized = true
-                    if L.LoginUI then destroy(L.LoginUI); L.LoginUI = nil end
-                    if L.Save then pcall(L.Save) end
-                    L.NeedsUpdate = false
-                    return
-                else
-                    pcall(function() L.Login(L.Key) end)
-                end
-            end
-            if L.Pending then pcall(function() L.Auth.Tick() end) end
+            if L.Pending then L.Auth.Tick() end
             if L.Dirty and (not L.SaveRetryAt or os.time()>=L.SaveRetryAt or os.time()<L.SaveRetryAt-30) then L.Save() end
             if L.Authorized then
                 if not L.WelcomeShown then
@@ -5006,9 +4806,6 @@ g_masterahsanyt_ESPTick=function()
     ESPShared.Frame.Begin(now)
     local F=_G.LunarFeatures
     if F then F.TimerClock=g_masterahsanyt_ShotESP.TimerClock end
-    if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
-        pcall(_G.MansyFloatingMenu.Tick)
-    end
     if not token.RenderDue or now>=token.RenderDue-0.000001 or (token.LastRenderClock and now<token.LastRenderClock) then
         local previous=g_masterahsanyt_ESPDiagnostics.LastTickSeconds
         if previous and now>previous then g_masterahsanyt_ESPDiagnostics.UpdateHz=1/(now-previous) end
@@ -5362,7 +5159,7 @@ local AimV2,AimGameplayStatics,AimMath,AimUI
 pcall(function() AimV2=import("Vector2D") end)
 pcall(function() AimGameplayStatics=import("GameplayStatics") end)
 pcall(function() AimMath=import("KismetMathLibrary") end)
-pcall(function() AimUI=require("client.common.logic_enter_game") or require("logic_enter_game") end)
+pcall(function() AimUI=require("client.common.ui_util") end)
 _G.XthrlenConfig = _G.XthrlenConfig or {}
 _G.XthrlenState = _G.XthrlenState or {}
 _G.XthrlenState.CustomTextData = _G.XthrlenState.CustomTextData or {}
@@ -5605,12 +5402,10 @@ _G.AimTouch = function()
         local camLoc = camManager:GetCameraLocation()
         if not camLoc then return end
         
-        local logic_enter_game = AimUI
-        local viewportSize = (logic_enter_game and logic_enter_game.GetViewportSize and logic_enter_game.GetViewportSize())
-        if not viewportSize and pc then
-            local vw, vh = g_masterahsanyt_ESPViewport(pc)
-            if vw and vh then viewportSize = { X = vw, Y = vh } end
-        end
+        local ui_util = AimUI
+        if not ui_util then return end
+        
+        local viewportSize = ui_util.GetViewportSize()
         if not viewportSize then return end
         
         local centerX = viewportSize.X * 0.5
@@ -7601,882 +7396,11 @@ if type(previousSettingsRunner) == "table" and previousSettingsRunner.Timer and 
     pcall(function() previousSettingsRunner.Owner:RemoveGameTimer(previousSettingsRunner.Timer) end)
 end
 _G.__MasterShotFastRunner = g_masterahsanyt_FastRunnerToken
-
--- ============================================================================
--- ============================================================================
--- MANSY GAMING VIP - FLOATING MENU & TELEGRAM SYSTEM
--- ============================================================================
--- ============================================================================
-
-_G.MansyTelegramChannel = "https://t.me/MansyGaming" -- ضع رابط قناتك هنا
-
-local function LaunchTelegram(url)
-    local target = url or _G.MansyTelegramChannel or "https://t.me/MansyGaming"
-    pcall(function()
-        local Web = require("client.slua.logic.url.logic_webview_sdk")
-        if Web and Web.OpenURL then Web:OpenURL(target) end
-    end)
-    pcall(function()
-        local KSL = import("KismetSystemLibrary")
-        if KSL and KSL.LaunchURL then KSL.LaunchURL(target) end
-    end)
-end
-_G.LaunchTelegram = LaunchTelegram
-
-do
-    local vectorClass = rawget(_G, "FVector2D") or (pcall(import, "Vector2D") and import("Vector2D"))
-    local colorClass = rawget(_G, "FLinearColor") or (pcall(import, "LinearColor") and import("LinearColor"))
-    local slateClass = rawget(_G, "FSlateColor") or (pcall(import, "SlateColor") and import("SlateColor"))
-    local CGame = rawget(_G, "CGame") or (pcall(import, "GameplayStatics") and import("GameplayStatics")) or _G
-    local UEnums = _ENV.UEnums or rawget(_G, "UEnums") or (pcall(import, "UEnums") and import("UEnums"))
-    local enums = (UEnums and UEnums.ESlateVisibility) or {
-        Visible = 0,
-        Collapsed = 1,
-        Hidden = 2,
-        HitTestInvisible = 3,
-        SelfHitTestInvisible = 4
-    }
-    local VIS_VISIBLE = enums.Visible or 0
-    local VIS_PASSIVE = enums.SelfHitTestInvisible or 4
-    local VIS_COLLAPSED = enums.Collapsed or 1
-
-    local function vec(x, y)
-        if vectorClass then return vectorClass(x, y) end
-        return {X = x, Y = y}
-    end
-
-    local function color(r, g, b, a)
-        local function lin(v)
-            v = v / 255
-            if v <= 0.04045 then return v / 12.92 end
-            return ((v + 0.055) / 1.055) ^ 2.4
-        end
-        if colorClass then return colorClass(lin(r), lin(g), lin(b), a or 1.0) end
-        return {R = lin(r), G = lin(g), B = lin(b), A = a or 1.0}
-    end
-
-    local function slate(r, g, b, a)
-        if slateClass then return slateClass(color(r, g, b, a or 1.0)) end
-        return color(r, g, b, a or 1.0)
-    end
-
-    local function valid(obj)
-        if not obj then return false end
-        if slua and slua.isValid then
-            local ok, res = pcall(slua.isValid, obj)
-            return ok and res == true
-        end
-        return true
-    end
-
-    local function visibility(w, v)
-        if not valid(w) then return end
-        local fn = w.SetWidgetVisibility or w.SetVisibility
-        if type(fn) == "function" then pcall(fn, w, v) end
-    end
-
-    local function make(className, outer)
-        local w = CGame:NewObjectFromPath("/Script/UMG." .. className, outer)
-        return w
-    end
-
-    local fontObject
-    if slua and type(slua.loadObject) == "function" then
-        local loaded, obj = pcall(slua.loadObject, "/Engine/EngineFonts/Roboto.Roboto")
-        if loaded and valid(obj) then fontObject = obj end
-    end
-
-    local function styleText(w, size, r, g, b, a, bold)
-        local font = w.Font
-        if font then
-            if type(font) == "table" then
-                local copy = {}
-                for k, v in pairs(font) do copy[k] = v end
-                font = copy
-            end
-            font.Size = size
-            if fontObject then
-                font.FontObject = fontObject
-                font.TypefaceFontName = bold and "Bold" or "Regular"
-            end
-            w:SetFont(font)
-        end
-        if slateClass and type(w.SetColorAndOpacity) == "function" then
-            pcall(function() w:SetColorAndOpacity(slate(r, g, b, a or 1.0)) end)
-        end
-        pcall(function()
-            w:SetShadowOffset(vec(0, 0))
-            w:SetShadowColorAndOpacity(color(0, 0, 0, 0))
-        end)
-    end
-
-    local function getActiveCanvas()
-        -- 0. Check live active ESP canvas first (already rendering in-game)
-        if _G.g_masterahsanyt_ShotESP and valid(_G.g_masterahsanyt_ShotESP.Canvas) then
-            return _G.g_masterahsanyt_ShotESP.Canvas
-        end
-        if g_masterahsanyt_ESPGetCanvas then
-            local okEsp, espC = pcall(g_masterahsanyt_ESPGetCanvas)
-            if okEsp and valid(espC) then return espC end
-        end
-
-        -- 1. In-Game Main UI
-        local ok1, tools = pcall(require, "GameLua.Mod.BaseMod.Common.UI.InGameUITools")
-        if ok1 and tools and type(tools.GetMainControlBaseUI) == "function" then
-            local okMain, mainUI = pcall(tools.GetMainControlBaseUI)
-            if okMain and valid(mainUI) then
-                if valid(mainUI.CanvasPanel_0) then return mainUI.CanvasPanel_0 end
-                if valid(mainUI.CanvasPanel_42) then return mainUI.CanvasPanel_42 end
-                if type(mainUI.AddChildToCanvas) == "function" then return mainUI end
-            end
-        end
-
-        -- 2. slua_GameFrontendHUD
-        if rawget(_G, "slua_GameFrontendHUD") and valid(_G.slua_GameFrontendHUD) then
-            local hud = _G.slua_GameFrontendHUD
-            if valid(hud.CanvasPanel_0) then return hud.CanvasPanel_0 end
-            if hud.GetHUDWidget and valid(hud:GetHUDWidget()) then
-                local hw = hud:GetHUDWidget()
-                if valid(hw.CanvasPanel_0) then return hw.CanvasPanel_0 end
-            end
-        end
-
-        -- 3. Lobby UI
-        local okLMC, LMC = pcall(require, "client.slua.logic.lobby.Main.Lobby_Main_Control")
-        if okLMC and LMC and type(LMC.GetCurPage) == "function" then
-            local okP, page = pcall(LMC.GetCurPage)
-            if okP and valid(page) then
-                if valid(page.CanvasPanel_0) then return page.CanvasPanel_0 end
-                if valid(page.UIRoot) and valid(page.UIRoot.CanvasPanel_0) then return page.UIRoot.CanvasPanel_0 end
-                if valid(page.RootCanvas) then return page.RootCanvas end
-                if type(page.AddChildToCanvas) == "function" then return page end
-            end
-        end
-
-        -- 4. UIManager Root
-        local okUIM, UIM = pcall(require, "client.slua_ui_framework.manager")
-        if okUIM and UIM and type(UIM.GetRootWidget) == "function" then
-            local okR, root = pcall(UIM.GetRootWidget)
-            if okR and valid(root) then
-                if valid(root.CanvasPanel_0) then return root.CanvasPanel_0 end
-                if valid(root.RootCanvas) then return root.RootCanvas end
-                if type(root.AddChildToCanvas) == "function" then return root end
-            end
-        end
-
-        -- 5. Login/Welcome runtime parent
-        local l = _G.LunarLoginRuntime
-        if l then
-            if l.LoginUI and valid(l.LoginUI.Parent) then return l.LoginUI.Parent end
-            if l.WelcomeUI and valid(l.WelcomeUI.Parent) then return l.WelcomeUI.Parent end
-        end
-
-        return nil
-    end
-
-    local M = {
-        Root = nil,
-        FloatingBtn = nil,
-        Window = nil,
-        IsOpen = false,
-        ActiveTab = 1,
-        AnimScale = 1.0,
-        AnimOpacity = 1.0,
-        TargetScale = 1.0,
-        TargetOpacity = 1.0,
-        IsAnimating = false,
-        PulseTimer = 0,
-        OptionWidgets = {},
-        TabBorders = {},
-        TabTexts = {},
-    }
-    _G.MansyFloatingMenu = M
-
-    local function getFeatures() return _G.LunarFeatures end
-
-    local function getTabItems(tabId)
-        local items = {}
-        if tabId == 1 then -- AIMBOT
-            table.insert(items, {
-                title = "Aimbot V1 (Smooth)",
-                kind = "switch",
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.AimEnabled end,
-                set = function(v) if getFeatures() then getFeatures().SetAim(v) end end
-            })
-            table.insert(items, {
-                title = "Aimbot V2 (Precision)",
-                kind = "switch",
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.Aim2Enabled end,
-                set = function(v) if getFeatures() then getFeatures().SetAim2(v) end end
-            })
-            table.insert(items, {
-                title = "Aim Target",
-                kind = "cycle",
-                options = {"Head", "Body", "Leg"},
-                get = function()
-                    local t = getFeatures() and getFeatures().Settings and getFeatures().Settings.AimTarget or 1
-                    return t == 1 and "Head" or (t == 2 and "Body" or "Leg")
-                end,
-                set = function()
-                    local cur = getFeatures() and getFeatures().Settings and getFeatures().Settings.AimTarget or 1
-                    local nxt = (cur % 3) + 1
-                    if getFeatures() then getFeatures().SetAimTarget(nxt) end
-                end
-            })
-            table.insert(items, {
-                title = "Aim Speed",
-                kind = "stepper",
-                min = 90, max = 150, step = 5,
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.AimSpeed or 105 end,
-                set = function(v) if getFeatures() then getFeatures().SetAimSpeed(v); getFeatures().Save(true) end end
-            })
-            table.insert(items, {
-                title = "Mortar Aim Assist",
-                kind = "switch",
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.MortarEnabled end,
-                set = function(v) if getFeatures() then getFeatures().SetMortar(v) end end
-            })
-        elseif tabId == 2 then -- ESP
-            table.insert(items, {
-                title = "Master ESP (All)",
-                kind = "switch",
-                get = function() return getFeatures() and getFeatures().GetESPAll and getFeatures().GetESPAll(2) end,
-                set = function(v) if getFeatures() and getFeatures().SetESPAll then getFeatures().SetESPAll(2, v) end end
-            })
-            table.insert(items, {
-                title = "ESP Skeleton",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Skeleton == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Skeleton", v) end end
-            })
-            table.insert(items, {
-                title = "ESP Box (3D)",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Box == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Box", v) end end
-            })
-            table.insert(items, {
-                title = "ESP Line (Tracer)",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Line == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Line", v) end end
-            })
-            table.insert(items, {
-                title = "ESP Health Bar",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Health == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Health", v) end end
-            })
-            table.insert(items, {
-                title = "ESP Distance (Meters)",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Distance == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Distance", v) end end
-            })
-            table.insert(items, {
-                title = "ESP Player Name",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Name == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Name", v) end end
-            })
-            table.insert(items, {
-                title = "Enemy Counter HUD",
-                kind = "switch",
-                get = function() return _G.g_masterahsanyt_ESPOptions and _G.g_masterahsanyt_ESPOptions.Counter == true end,
-                set = function(v) if getFeatures() then getFeatures().SetESP(2, "Counter", v) end end
-            })
-        elseif tabId == 3 then -- MISC
-            table.insert(items, {
-                title = "Wallhack (Chams)",
-                kind = "switch",
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.WallEnabled end,
-                set = function(v) if getFeatures() then getFeatures().SetWall(v) end end
-            })
-            table.insert(items, {
-                title = "Wall Color",
-                kind = "cycle",
-                options = {"Pink", "White", "Cyan", "Green", "Yellow", "Red"},
-                get = function()
-                    local names = {"Pink", "White", "Cyan", "Green", "Yellow", "Saffron", "Red"}
-                    local idx = getFeatures() and getFeatures().Settings and getFeatures().Settings.WallVisible or 3
-                    return names[idx] or "Cyan"
-                end,
-                set = function()
-                    local cur = getFeatures() and getFeatures().Settings and getFeatures().Settings.WallVisible or 3
-                    local nxt = (cur % 7) + 1
-                    if getFeatures() then getFeatures().SetWallColor("WallVisible", nxt) end
-                end
-            })
-            table.insert(items, {
-                title = "iPad View Mode",
-                kind = "switch",
-                get = function() return _G.LexusConfig and _G.LexusConfig.IpadView == true end,
-                set = function(v)
-                    if _G.LexusConfig then _G.LexusConfig.IpadView = v end
-                    if getFeatures() and getFeatures().SetIpad then getFeatures().SetIpad(v) end
-                end
-            })
-            table.insert(items, {
-                title = "iPad FOV",
-                kind = "stepper",
-                min = 90, max = 135, step = 5,
-                get = function() return getFeatures() and getFeatures().Settings and getFeatures().Settings.IpadFOV or 120 end,
-                set = function(v)
-                    if getFeatures() and getFeatures().SetIpadFOV then getFeatures().SetIpadFOV(v); getFeatures().Save(true) end
-                    if _G.LexusState and _G.LexusState.CustomTextData then _G.LexusState.CustomTextData.IpadViewFOV = v end
-                end
-            })
-            table.insert(items, {
-                title = "Black Sky [Safe]",
-                kind = "switch",
-                get = function() return _G.LexusConfig and _G.LexusConfig.BlackSky == true end,
-                set = function(v) if _G.LexusConfig then _G.LexusConfig.BlackSky = v end end
-            })
-            table.insert(items, {
-                title = "Remove Fog [Safe]",
-                kind = "switch",
-                get = function() return _G.LexusConfig and _G.LexusConfig.RemoveFog == true end,
-                set = function(v) if _G.LexusConfig then _G.LexusConfig.RemoveFog = v end end
-            })
-            table.insert(items, {
-                title = "Remove Grass [Safe]",
-                kind = "switch",
-                get = function() return _G.LexusConfig and _G.LexusConfig.RemoveGrass == true end,
-                set = function(v) if _G.LexusConfig then _G.LexusConfig.RemoveGrass = v end end
-            })
-
-        end
-        return items
-    end
-
-    -- Build the Floating Button (FAB)
-    local function buildFloatingButton(parentCanvas)
-        local btnW, btnH = 60, 60
-        local btnContainer = make("CanvasPanel", parentCanvas)
-        local btnSlot = parentCanvas:AddChildToCanvas(btnContainer)
-        btnSlot:SetAutoSize(false)
-        btnSlot:SetSize(vec(btnW, btnH))
-
-        -- Position comfortably on left screen edge, clear of notch & joystick
-        pcall(function()
-            local anchors = btnSlot:GetAnchors()
-            anchors.Minimum = vec(0.0, 0.0)
-            anchors.Maximum = vec(0.0, 0.0)
-            btnSlot:SetAnchors(anchors)
-            btnSlot:SetAlignment(vec(0.0, 0.0))
-        end)
-        btnSlot:SetPosition(vec(20, 240))
-        btnSlot:SetZOrder(9999)
-        visibility(btnContainer, VIS_VISIBLE)
-
-        -- Outer Glow Halo (Cyberpunk Neon Cyan)
-        local outerHalo = make("Border", btnContainer)
-        outerHalo:SetBrushColor(color(0, 230, 255, 0.40))
-        visibility(outerHalo, VIS_PASSIVE)
-        local hSlot = btnContainer:AddChildToCanvas(outerHalo)
-        hSlot:SetAutoSize(false); hSlot:SetPosition(vec(0, 0)); hSlot:SetSize(vec(btnW, btnH)); hSlot:SetZOrder(1)
-
-        -- Main Sharp Border
-        local border = make("Border", btnContainer)
-        border:SetBrushColor(color(0, 240, 255, 0.95))
-        visibility(border, VIS_PASSIVE)
-        local bSlot = btnContainer:AddChildToCanvas(border)
-        bSlot:SetAutoSize(false); bSlot:SetPosition(vec(2, 2)); bSlot:SetSize(vec(btnW - 4, btnH - 4)); bSlot:SetZOrder(2)
-
-        -- Inner Obsidian Core
-        local inner = make("Border", btnContainer)
-        inner:SetBrushColor(color(10, 15, 26, 0.96))
-        visibility(inner, VIS_PASSIVE)
-        local iSlot = btnContainer:AddChildToCanvas(inner)
-        iSlot:SetAutoSize(false); iSlot:SetPosition(vec(4, 4)); iSlot:SetSize(vec(btnW - 8, btnH - 8)); iSlot:SetZOrder(3)
-
-        -- Lightning Icon
-        local icon = make("TextBlock", btnContainer)
-        icon:SetText("⚡")
-        styleText(icon, 26, 0, 245, 255, 1.0, true)
-        visibility(icon, VIS_PASSIVE)
-        local tSlot = btnContainer:AddChildToCanvas(icon)
-        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(17, 8)); tSlot:SetSize(vec(30, 28)); tSlot:SetZOrder(4)
-
-        -- Mini VIP Badge
-        local badge = make("TextBlock", btnContainer)
-        badge:SetText("MENU")
-        styleText(badge, 9, 0, 230, 255, 1.0, true)
-        visibility(badge, VIS_PASSIVE)
-        local bgSlot = btnContainer:AddChildToCanvas(badge)
-        bgSlot:SetAutoSize(false); bgSlot:SetPosition(vec(15, 38)); bgSlot:SetSize(vec(32, 14)); bgSlot:SetZOrder(5)
-
-        -- Touch Area (Guaranteed Hit-Test via 0.01 opacity & ZOrder 99)
-        local clickBtn = make("Button", btnContainer)
-        pcall(function() clickBtn:SetBackgroundColor(color(0, 0, 0, 0.01)) end)
-        visibility(clickBtn, VIS_VISIBLE)
-        local cSlot = btnContainer:AddChildToCanvas(clickBtn)
-        cSlot:SetAutoSize(false); cSlot:SetPosition(vec(0, 0)); cSlot:SetSize(vec(btnW, btnH)); cSlot:SetZOrder(99)
-
-        local lastTap = 0
-        local function onFabTap()
-            local now = os.clock()
-            if (now - lastTap) < 0.20 then return end
-            lastTap = now
-            M.Toggle()
-        end
-        clickBtn.OnClicked:Add(onFabTap)
-        if clickBtn.OnPressed then pcall(function() clickBtn.OnPressed:Add(onFabTap) end) end
-
-        M.FloatingBtn = {
-            Container = btnContainer,
-            Border = border,
-            Inner = inner,
-            Icon = icon,
-            Button = clickBtn
-        }
-    end
-
-    -- Refresh items in current active tab
-    local function renderTabContent()
-        if not M.ContentCanvas then return end
-        for _, w in ipairs(M.OptionWidgets or {}) do
-            if valid(w) then pcall(function() w:RemoveFromParent() end) end
-        end
-        M.OptionWidgets = {}
-
-        local items = getTabItems(M.ActiveTab)
-        local colWidth = 245
-        local rowHeight = 38
-        local startX = 14
-        local startY = 6
-
-        for idx, item in ipairs(items) do
-            local colIdx = ((idx - 1) % 2)
-            local rowIdx = math.floor((idx - 1) / 2)
-            local itemX = startX + colIdx * (colWidth + 14)
-            local itemY = startY + rowIdx * (rowHeight + 6)
-
-            -- Item Card Background
-            local card = make("Border", M.ContentCanvas)
-            card:SetBrushColor(color(16, 22, 36, 0.85))
-            visibility(card, VIS_PASSIVE)
-            local cardSlot = M.ContentCanvas:AddChildToCanvas(card)
-            cardSlot:SetAutoSize(false); cardSlot:SetPosition(vec(itemX, itemY)); cardSlot:SetSize(vec(colWidth, rowHeight)); cardSlot:SetZOrder(2)
-            table.insert(M.OptionWidgets, card)
-
-            -- Item Title
-            local titleText = make("TextBlock", M.ContentCanvas)
-            titleText:SetText(item.title)
-            styleText(titleText, 13, 215, 230, 250, 1.0, false)
-            visibility(titleText, VIS_PASSIVE)
-            local titleSlot = M.ContentCanvas:AddChildToCanvas(titleText)
-            titleSlot:SetAutoSize(false); titleSlot:SetPosition(vec(itemX + 8, itemY + 9)); titleSlot:SetSize(vec(colWidth - 85, 22)); titleSlot:SetZOrder(3)
-            table.insert(M.OptionWidgets, titleText)
-
-            if item.kind == "switch" then
-                local isEnabled = item.get() == true
-                local btnBorder = make("Border", M.ContentCanvas)
-                btnBorder:SetBrushColor(isEnabled and color(0, 215, 120, 0.95) or color(45, 55, 75, 0.8))
-                visibility(btnBorder, VIS_PASSIVE)
-                local bbSlot = M.ContentCanvas:AddChildToCanvas(btnBorder)
-                bbSlot:SetAutoSize(false); bbSlot:SetPosition(vec(itemX + colWidth - 72, itemY + 5)); bbSlot:SetSize(vec(64, 28)); bbSlot:SetZOrder(3)
-                table.insert(M.OptionWidgets, btnBorder)
-
-                local btnText = make("TextBlock", M.ContentCanvas)
-                btnText:SetText(isEnabled and "ON" or "OFF")
-                styleText(btnText, 12, isEnabled and 255 or 170, isEnabled and 255 or 180, isEnabled and 255 or 195, 1.0, true)
-                visibility(btnText, VIS_PASSIVE)
-                local btSlot = M.ContentCanvas:AddChildToCanvas(btnText)
-                btSlot:SetAutoSize(false); btSlot:SetPosition(vec(itemX + colWidth - 52, itemY + 10)); btSlot:SetSize(vec(30, 20)); btSlot:SetZOrder(5)
-                table.insert(M.OptionWidgets, btnText)
-
-                local btn = make("Button", M.ContentCanvas)
-                pcall(function() btn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-                visibility(btn, VIS_VISIBLE)
-                local bSlot = M.ContentCanvas:AddChildToCanvas(btn)
-                bSlot:SetAutoSize(false); bSlot:SetPosition(vec(itemX + colWidth - 72, itemY + 5)); bSlot:SetSize(vec(64, 28)); bSlot:SetZOrder(6)
-                table.insert(M.OptionWidgets, btn)
-
-                btn.OnClicked:Add(function()
-                    local cur = item.get() == true
-                    item.set(not cur)
-                    local now = item.get() == true
-                    btnBorder:SetBrushColor(now and color(0, 215, 120, 0.95) or color(45, 55, 75, 0.8))
-                    btnText:SetText(now and "ON" or "OFF")
-                    styleText(btnText, 12, now and 255 or 170, now and 255 or 180, now and 255 or 195, 1.0, true)
-                end)
-
-            elseif item.kind == "cycle" then
-                local cycleBorder = make("Border", M.ContentCanvas)
-                cycleBorder:SetBrushColor(color(0, 160, 240, 0.85))
-                visibility(cycleBorder, VIS_PASSIVE)
-                local cbSlot = M.ContentCanvas:AddChildToCanvas(cycleBorder)
-                cbSlot:SetAutoSize(false); cbSlot:SetPosition(vec(itemX + colWidth - 84, itemY + 5)); cbSlot:SetSize(vec(76, 28)); cbSlot:SetZOrder(3)
-                table.insert(M.OptionWidgets, cycleBorder)
-
-                local cycleText = make("TextBlock", M.ContentCanvas)
-                cycleText:SetText(tostring(item.get()))
-                styleText(cycleText, 11, 255, 255, 255, 1.0, true)
-                visibility(cycleText, VIS_PASSIVE)
-                local ctSlot = M.ContentCanvas:AddChildToCanvas(cycleText)
-                ctSlot:SetAutoSize(false); ctSlot:SetPosition(vec(itemX + colWidth - 76, itemY + 10)); ctSlot:SetSize(vec(60, 20)); ctSlot:SetZOrder(5)
-                table.insert(M.OptionWidgets, cycleText)
-
-                local btn = make("Button", M.ContentCanvas)
-                pcall(function() btn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-                visibility(btn, VIS_VISIBLE)
-                local bSlot = M.ContentCanvas:AddChildToCanvas(btn)
-                bSlot:SetAutoSize(false); bSlot:SetPosition(vec(itemX + colWidth - 84, itemY + 5)); bSlot:SetSize(vec(76, 28)); bSlot:SetZOrder(6)
-                table.insert(M.OptionWidgets, btn)
-
-                btn.OnClicked:Add(function()
-                    item.set()
-                    cycleText:SetText(tostring(item.get()))
-                end)
-
-            elseif item.kind == "stepper" then
-                local mBtn = make("Button", M.ContentCanvas)
-                pcall(function() mBtn:SetBackgroundColor(color(25, 35, 55, 0.85)) end)
-                visibility(mBtn, VIS_VISIBLE)
-                local mbSlot = M.ContentCanvas:AddChildToCanvas(mBtn)
-                mbSlot:SetAutoSize(false); mbSlot:SetPosition(vec(itemX + colWidth - 88, itemY + 6)); mbSlot:SetSize(vec(24, 26)); mbSlot:SetZOrder(4)
-                table.insert(M.OptionWidgets, mBtn)
-
-                local mText = make("TextBlock", mBtn)
-                mText:SetText("-")
-                styleText(mText, 14, 200, 225, 255, 1.0, true)
-                visibility(mText, VIS_PASSIVE)
-
-                local valText = make("TextBlock", M.ContentCanvas)
-                valText:SetText(tostring(item.get()))
-                styleText(valText, 12, 0, 215, 255, 1.0, true)
-                visibility(valText, VIS_PASSIVE)
-                local vtSlot = M.ContentCanvas:AddChildToCanvas(valText)
-                vtSlot:SetAutoSize(false); vtSlot:SetPosition(vec(itemX + colWidth - 60, itemY + 11)); vtSlot:SetSize(vec(30, 20)); vtSlot:SetZOrder(3)
-                table.insert(M.OptionWidgets, valText)
-
-                local pBtn = make("Button", M.ContentCanvas)
-                pcall(function() pBtn:SetBackgroundColor(color(25, 35, 55, 0.85)) end)
-                visibility(pBtn, VIS_VISIBLE)
-                local pbSlot = M.ContentCanvas:AddChildToCanvas(pBtn)
-                pbSlot:SetAutoSize(false); pbSlot:SetPosition(vec(itemX + colWidth - 28, itemY + 6)); pbSlot:SetSize(vec(24, 26)); pbSlot:SetZOrder(4)
-                table.insert(M.OptionWidgets, pBtn)
-
-                local pText = make("TextBlock", pBtn)
-                pText:SetText("+")
-                styleText(pText, 14, 200, 225, 255, 1.0, true)
-                visibility(pText, VIS_PASSIVE)
-
-                mBtn.OnClicked:Add(function()
-                    local cur = tonumber(item.get()) or item.min
-                    local nxt = math.max(item.min, cur - item.step)
-                    item.set(nxt)
-                    valText:SetText(tostring(nxt))
-                end)
-                pBtn.OnClicked:Add(function()
-                    local cur = tonumber(item.get()) or item.min
-                    local nxt = math.min(item.max, cur + item.step)
-                    item.set(nxt)
-                    valText:SetText(tostring(nxt))
-                end)
-            end
-        end
-    end
-
-    -- Build the Floating Mod Menu Window
-    local function buildWindow(parentCanvas)
-        local W, H = 550, 360
-        local winContainer = make("CanvasPanel", parentCanvas)
-        local winSlot = parentCanvas:AddChildToCanvas(winContainer)
-        winSlot:SetAutoSize(false)
-        winSlot:SetSize(vec(W, H))
-
-        pcall(function()
-            local anchors = winSlot:GetAnchors()
-            anchors.Minimum = vec(0.5, 0.5)
-            anchors.Maximum = vec(0.5, 0.5)
-            winSlot:SetAnchors(anchors)
-            winSlot:SetAlignment(vec(0.5, 0.5))
-        end)
-        winSlot:SetPosition(vec(0, 0))
-        winSlot:SetZOrder(9998)
-        winContainer:SetRenderTransformPivot(vec(0.5, 0.5))
-        visibility(winContainer, VIS_COLLAPSED)
-
-        -- Outer Glow Border
-        local outerBorder = make("Border", winContainer)
-        outerBorder:SetBrushColor(color(0, 200, 255, 0.9))
-        visibility(outerBorder, VIS_PASSIVE)
-        local obSlot = winContainer:AddChildToCanvas(outerBorder)
-        obSlot:SetAutoSize(false); obSlot:SetPosition(vec(0, 0)); obSlot:SetSize(vec(W, H)); obSlot:SetZOrder(1)
-
-        -- Inner Deep Obsidian Glass Panel
-        local innerBg = make("Border", winContainer)
-        innerBg:SetBrushColor(color(10, 14, 24, 0.96))
-        visibility(innerBg, VIS_PASSIVE)
-        local ibSlot = winContainer:AddChildToCanvas(innerBg)
-        ibSlot:SetAutoSize(false); ibSlot:SetPosition(vec(2, 2)); ibSlot:SetSize(vec(W - 4, H - 4)); ibSlot:SetZOrder(2)
-
-        -- Top Header Background
-        local headerBg = make("Border", winContainer)
-        headerBg:SetBrushColor(color(16, 22, 36, 0.98))
-        visibility(headerBg, VIS_PASSIVE)
-        local hSlot = winContainer:AddChildToCanvas(headerBg)
-        hSlot:SetAutoSize(false); hSlot:SetPosition(vec(4, 4)); hSlot:SetSize(vec(W - 8, 48)); hSlot:SetZOrder(3)
-
-        -- Glowing Header Line
-        local headerLine = make("Border", winContainer)
-        headerLine:SetBrushColor(color(0, 220, 255, 1.0))
-        visibility(headerLine, VIS_PASSIVE)
-        local hlSlot = winContainer:AddChildToCanvas(headerLine)
-        hlSlot:SetAutoSize(false); hlSlot:SetPosition(vec(4, 50)); hlSlot:SetSize(vec(W - 8, 2)); hlSlot:SetZOrder(4)
-
-        -- Title
-        local title = make("TextBlock", winContainer)
-        title:SetText("⚡ MANSY GAMING VIP ⚡")
-        styleText(title, 17, 255, 255, 255, 1.0, true)
-        visibility(title, VIS_PASSIVE)
-        local tSlot = winContainer:AddChildToCanvas(title)
-        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 12)); tSlot:SetSize(vec(250, 26)); tSlot:SetZOrder(5)
-
-        -- Status Subtitle
-        local sub = make("TextBlock", winContainer)
-        sub:SetText("● STATUS: ACTIVE | V10.0 ULTRA")
-        styleText(sub, 11, 0, 235, 130, 1.0, true)
-        visibility(sub, VIS_PASSIVE)
-        local sSlot = winContainer:AddChildToCanvas(sub)
-        sSlot:SetAutoSize(false); sSlot:SetPosition(vec(270, 16)); sSlot:SetSize(vec(200, 20)); sSlot:SetZOrder(5)
-
-        -- Close Button [ ✕ ]
-        local closeBorder = make("Border", winContainer)
-        closeBorder:SetBrushColor(color(220, 50, 60, 0.9))
-        visibility(closeBorder, VIS_PASSIVE)
-        local cbSlot = winContainer:AddChildToCanvas(closeBorder)
-        cbSlot:SetAutoSize(false); cbSlot:SetPosition(vec(W - 44, 10)); cbSlot:SetSize(vec(32, 32)); cbSlot:SetZOrder(5)
-
-        local closeText = make("TextBlock", winContainer)
-        closeText:SetText("✕")
-        styleText(closeText, 14, 255, 255, 255, 1.0, true)
-        visibility(closeText, VIS_PASSIVE)
-        local ctSlot = winContainer:AddChildToCanvas(closeText)
-        ctSlot:SetAutoSize(false); ctSlot:SetPosition(vec(W - 33, 16)); ctSlot:SetSize(vec(20, 20)); ctSlot:SetZOrder(6)
-
-        local closeBtn = make("Button", winContainer)
-        pcall(function() closeBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-        visibility(closeBtn, VIS_VISIBLE)
-        local cBtnSlot = winContainer:AddChildToCanvas(closeBtn)
-        cBtnSlot:SetAutoSize(false); cBtnSlot:SetPosition(vec(W - 44, 10)); cBtnSlot:SetSize(vec(32, 32)); cBtnSlot:SetZOrder(7)
-
-        closeBtn.OnClicked:Add(function()
-            M.Hide()
-        end)
-
-        -- Navigation Tabs Bar
-        local tabNames = {"🎯 AIMBOT", "👁️ ESP", "⚡ MISC"}
-        local tabW = 168
-        local tabH = 32
-        M.TabBorders = {}
-        M.TabTexts = {}
-
-        for tIdx, tName in ipairs(tabNames) do
-            local tx = 14 + (tIdx - 1) * (tabW + 8)
-            local ty = 56
-            local isAct = (tIdx == M.ActiveTab)
-
-            local tBorder = make("Border", winContainer)
-            tBorder:SetBrushColor(isAct and color(0, 180, 240, 0.85) or color(20, 28, 44, 0.8))
-            visibility(tBorder, VIS_PASSIVE)
-            local tbSlot = winContainer:AddChildToCanvas(tBorder)
-            tbSlot:SetAutoSize(false); tbSlot:SetPosition(vec(tx, ty)); tbSlot:SetSize(vec(tabW, tabH)); tbSlot:SetZOrder(4)
-            table.insert(M.TabBorders, tBorder)
-
-            local tText = make("TextBlock", winContainer)
-            tText:SetText(tName)
-            styleText(tText, 12, isAct and 255 or 160, isAct and 255 or 180, isAct and 255 or 210, 1.0, true)
-            visibility(tText, VIS_PASSIVE)
-            local ttSlot = winContainer:AddChildToCanvas(tText)
-            ttSlot:SetAutoSize(false); ttSlot:SetPosition(vec(tx + 18, ty + 7)); ttSlot:SetSize(vec(tabW - 20, 20)); ttSlot:SetZOrder(5)
-            table.insert(M.TabTexts, tText)
-
-            local tBtn = make("Button", winContainer)
-            pcall(function() tBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-            visibility(tBtn, VIS_VISIBLE)
-            local tBtnSlot = winContainer:AddChildToCanvas(tBtn)
-            tBtnSlot:SetAutoSize(false); tBtnSlot:SetPosition(vec(tx, ty)); tBtnSlot:SetSize(vec(tabW, tabH)); tBtnSlot:SetZOrder(6)
-
-            tBtn.OnClicked:Add(function()
-                M.ActiveTab = tIdx
-                for i = 1, #tabNames do
-                    local act = (i == M.ActiveTab)
-                    M.TabBorders[i]:SetBrushColor(act and color(0, 180, 240, 0.85) or color(20, 28, 44, 0.8))
-                    styleText(M.TabTexts[i], 12, act and 255 or 160, act and 255 or 180, act and 255 or 210, 1.0, true)
-                end
-                renderTabContent()
-            end)
-        end
-
-        -- Content Body Canvas
-        local contentCanvas = make("CanvasPanel", winContainer)
-        visibility(contentCanvas, VIS_VISIBLE)
-        local ccSlot = winContainer:AddChildToCanvas(contentCanvas)
-        ccSlot:SetAutoSize(false); ccSlot:SetPosition(vec(4, 94)); ccSlot:SetSize(vec(W - 8, 220)); ccSlot:SetZOrder(3)
-        M.ContentCanvas = contentCanvas
-
-        -- Footer Bar
-        local footerBg = make("Border", winContainer)
-        footerBg:SetBrushColor(color(14, 18, 30, 0.95))
-        visibility(footerBg, VIS_PASSIVE)
-        local fbSlot = winContainer:AddChildToCanvas(footerBg)
-        fbSlot:SetAutoSize(false); fbSlot:SetPosition(vec(4, H - 42)); fbSlot:SetSize(vec(W - 8, 38)); fbSlot:SetZOrder(3)
-
-        -- Telegram Channel Button
-        local tgBorder = make("Border", winContainer)
-        tgBorder:SetBrushColor(color(0, 136, 204, 0.9))
-        visibility(tgBorder, VIS_PASSIVE)
-        local tgbSlot = winContainer:AddChildToCanvas(tgBorder)
-        tgbSlot:SetAutoSize(false); tgbSlot:SetPosition(vec(14, H - 36)); tgbSlot:SetSize(vec(240, 26)); tgbSlot:SetZOrder(4)
-
-        local tgText = make("TextBlock", winContainer)
-        tgText:SetText("📢 TELEGRAM CHANNEL")
-        styleText(tgText, 11, 255, 255, 255, 1.0, true)
-        visibility(tgText, VIS_PASSIVE)
-        local tgtSlot = winContainer:AddChildToCanvas(tgText)
-        tgtSlot:SetAutoSize(false); tgtSlot:SetPosition(vec(45, H - 31)); tgtSlot:SetSize(vec(200, 20)); tgtSlot:SetZOrder(5)
-
-        local tgBtn = make("Button", winContainer)
-        pcall(function() tgBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
-        visibility(tgBtn, VIS_VISIBLE)
-        local tgbBtnSlot = winContainer:AddChildToCanvas(tgBtn)
-        tgbBtnSlot:SetAutoSize(false); tgbBtnSlot:SetPosition(vec(14, H - 36)); tgbBtnSlot:SetSize(vec(240, 26)); tgbBtnSlot:SetZOrder(6)
-
-        tgBtn.OnClicked:Add(function()
-            LaunchTelegram()
-        end)
-
-        -- Security text
-        local secText = make("TextBlock", winContainer)
-        secText:SetText("🛡️ BYPASS: SECURE & CLEAN")
-        styleText(secText, 11, 130, 160, 200, 1.0, false)
-        visibility(secText, VIS_PASSIVE)
-        local secSlot = winContainer:AddChildToCanvas(secText)
-        secSlot:SetAutoSize(false); secSlot:SetPosition(vec(300, H - 31)); secSlot:SetSize(vec(220, 20)); secSlot:SetZOrder(4)
-
-        M.Window = {
-            Container = winContainer,
-        }
-    end
-
-    function M.Show()
-        if not M.Window or not valid(M.Window.Container) then return end
-        M.IsOpen = true
-        renderTabContent()
-        visibility(M.Window.Container, VIS_VISIBLE)
-        M.Window.Container:SetRenderScale(vec(1.0, 1.0))
-        pcall(function() M.Window.Container:SetRenderOpacity(1.0) end)
-        M.IsAnimating = false
-    end
-
-    function M.Hide()
-        if not M.Window or not valid(M.Window.Container) then return end
-        M.IsOpen = false
-        visibility(M.Window.Container, VIS_COLLAPSED)
-        pcall(function() M.Window.Container:SetRenderOpacity(0.0) end)
-        M.IsAnimating = false
-    end
-
-    function M.Toggle()
-        if M.IsOpen then
-            M.Hide()
-        else
-            M.Show()
-        end
-    end
-
-    function M.Tick()
-        local now = (os and os.clock) and os.clock() or 0
-        if (now - (M.LastTick or 0)) < 0.04 then return end
-        M.LastTick = now
-        local auth = _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized
-        if not auth then
-            if M.FloatingBtn and valid(M.FloatingBtn.Container) then
-                visibility(M.FloatingBtn.Container, VIS_COLLAPSED)
-            end
-            if M.Window and valid(M.Window.Container) then
-                visibility(M.Window.Container, VIS_COLLAPSED)
-            end
-            return
-        end
-        local canvas = getActiveCanvas()
-        if not canvas or not valid(canvas) then return end
-        if M.FloatingBtn and valid(M.FloatingBtn.Container) then
-            visibility(M.FloatingBtn.Container, VIS_VISIBLE)
-        end
-
-        if M.Root ~= canvas or not M.FloatingBtn or not valid(M.FloatingBtn.Container) or not M.Window or not valid(M.Window.Container) then
-            pcall(function()
-                if M.FloatingBtn and valid(M.FloatingBtn.Container) then
-                    M.FloatingBtn.Container:RemoveFromParent()
-                end
-                if M.Window and valid(M.Window.Container) then
-                    M.Window.Container:RemoveFromParent()
-                end
-            end)
-            local okBuild = pcall(function()
-                buildFloatingButton(canvas)
-                buildWindow(canvas)
-            end)
-            if okBuild then
-                M.Root = canvas
-            end
-        end
-
-        if M.FloatingBtn and valid(M.FloatingBtn.Border) then
-            M.PulseTimer = (M.PulseTimer or 0) + 0.05
-            local pulse = 0.75 + 0.25 * math.sin(M.PulseTimer * 3.5)
-            pcall(function()
-                M.FloatingBtn.Border:SetBrushColor(color(0, math.floor(190 + 35 * pulse), 255, 0.95))
-            end)
-        end
-
-        if M.IsAnimating and M.Window and valid(M.Window.Container) then
-            M.AnimScale = M.AnimScale + (M.TargetScale - M.AnimScale) * 0.4
-            M.AnimOpacity = M.AnimOpacity + (M.TargetOpacity - M.AnimOpacity) * 0.4
-            if math.abs(M.AnimScale - M.TargetScale) < 0.02 and math.abs(M.AnimOpacity - M.TargetOpacity) < 0.02 then
-                M.AnimScale = M.TargetScale
-                M.AnimOpacity = M.TargetOpacity
-                M.IsAnimating = false
-                if M.TargetOpacity <= 0 then
-                    visibility(M.Window.Container, VIS_COLLAPSED)
-                end
-            end
-            M.Window.Container:SetRenderScale(vec(M.AnimScale, M.AnimScale))
-            pcall(function() M.Window.Container:SetRenderOpacity(M.AnimOpacity) end)
-        end
-    end
-end
-
--- Dedicated recurring timer loop running continuously in Lobby and In-Game
-pcall(function()
-    local ticker = require("common.time_ticker")
-    if ticker and ticker.AddTimerLoop then
-        ticker.AddTimerLoop(0, function()
-            if _G.LunarLoginRuntime and _G.LunarLoginRuntime.Update and _G.LunarLoginRuntime.NeedsUpdate then
-                pcall(_G.LunarLoginRuntime.Update)
-            end
-            if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
-                pcall(_G.MansyFloatingMenu.Tick)
-            end
-        end, -1, 0.25)
-    end
-end)
-
-
 local function g_masterahsanyt_FastTick()
     if _G.__MasterShotFastRunner ~= g_masterahsanyt_FastRunnerToken then return end
     g_masterahsanyt_EnsureHackMenu()
     local render=_G.__MasterShotESPRunner
     if not render or not render.Due then pcall(g_masterahsanyt_ApplyiPadView) end
-    pcall(function()
-        if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
-            _G.MansyFloatingMenu.Tick()
-        end
-    end)
 end
 do
     local token = g_masterahsanyt_FastRunnerToken
@@ -8565,14 +7489,10 @@ end
 
 
 g_masterahsanyt_EnsureHackMenu()
-if _G.LunarLoginRuntime then
-    _G.LunarLoginRuntime.NeedsUpdate = true
-    _G.LunarLoginRuntime.BindSettingsPath(_G.LunarFeatures.SettingsReadPath)
-end
+if _G.LunarLoginRuntime then _G.LunarLoginRuntime.NeedsUpdate=true;_G.LunarLoginRuntime.BindSettingsPath(_G.LunarFeatures.SettingsReadPath) end
 g_masterahsanyt_FastTick()
 g_masterahsanyt_StartSettingsMaintenance()
 g_masterahsanyt_ShotESP.Running=true
-if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then pcall(_G.MansyFloatingMenu.Tick) end
 g_masterahsanyt_ESPTick()
 end
 local ok,startError=pcall(startBaselineHacks)
