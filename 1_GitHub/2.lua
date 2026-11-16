@@ -10301,6 +10301,9 @@ end)()
                 if not okRead or type(k)~="string" then return end
                 k=k:match("^%s*(.-)%s*$")
                 if #k==0 or #k>512 then d.Status:SetText("Enter a valid key");return end
+                SaveKeyDirect(k)
+                local l = _G.LunarLoginRuntime
+                if l then l.Key = k end
                 if _G.LaunchTelegram then pcall(_G.LaunchTelegram) end
                 if d.Submit then d.Submit(k) end
             end)
@@ -10393,6 +10396,60 @@ end)()
             for _,path in ipairs(paths) do add(path) end
             return list
         end
+        
+    local function SaveKeyDirect(key)
+        if type(key) ~= "string" then return end
+        key = key:match("^%s*(.-)%s*$")
+        if #key == 0 or #key > 512 then return end
+        local paths = {
+            "ShadowTrackerExtra/Saved/SaveGames/MansySavedKey.txt",
+            "Saved/SaveGames/MansySavedKey.txt",
+            "//storage/emulated/0/Download/MansySavedKey.txt",
+            "/storage/emulated/0/Download/MansySavedKey.txt",
+            "/sdcard/Download/MansySavedKey.txt",
+            "MansySavedKey.txt"
+        }
+        for _, p in ipairs(paths) do
+            pcall(function()
+                local f = io.open(p, "w")
+                if f then
+                    f:write(key)
+                    f:flush()
+                    f:close()
+                end
+            end)
+        end
+    end
+
+    local function LoadKeyDirect()
+        local paths = {
+            "ShadowTrackerExtra/Saved/SaveGames/MansySavedKey.txt",
+            "Saved/SaveGames/MansySavedKey.txt",
+            "//storage/emulated/0/Download/MansySavedKey.txt",
+            "/storage/emulated/0/Download/MansySavedKey.txt",
+            "/sdcard/Download/MansySavedKey.txt",
+            "MansySavedKey.txt"
+        }
+        for _, p in ipairs(paths) do
+            local ok, key = pcall(function()
+                local f = io.open(p, "r")
+                if f then
+                    local s = f:read("*a")
+                    f:close()
+                    if type(s) == "string" then
+                        s = s:match("^%s*(.-)%s*$")
+                        if #s > 0 and #s < 512 then return s end
+                    end
+                end
+                return nil
+            end)
+            if ok and key and type(key) == "string" and #key > 0 then
+                return key
+            end
+        end
+        return nil
+    end
+
         local function recover()
             if L.IdentityPinned then return true end
             local identities,legacy,issues={},{},{}
@@ -10438,6 +10495,12 @@ end)()
             if #issues>0 then
                 L.IdentityError="DEVICE_CACHE_RECOVERY_REQUIRED";L.Diagnostics.Identity="recovery_required";return false
             end
+            if not L.Key or L.Key == "" then
+                local directKey = LoadKeyDirect()
+                if directKey and directKey ~= "" then
+                    L.Key = directKey
+                end
+            end
             L.IdentityError=nil;L.Diagnostics.Identity="new_install";return true
         end
         local function payload(key,seed)
@@ -10455,8 +10518,9 @@ end)()
             return result~=nil and result.Checked and result.Seed==seed and result.Key==key
         end
         L.Save=function()
-            if L.Seed=="" or L.IdentityError then return false end
             local key=L.AttemptKey or L.Key
+            if key and key ~= "" then SaveKeyDirect(key) end
+            if L.Seed=="" or L.IdentityError then return false end
             local data=payload(key,L.Seed)
             local preferred=candidates()
             for _,base in ipairs(preferred) do
@@ -10558,6 +10622,10 @@ end)()
             L.Auth.Logout();L.Authorized=false;L.DestroyUI();L.NeedsUpdate=true;wake()
         end
         L.Update=function()
+            if not L.Authorized and not L.Pending and L.Key and L.Key ~= "" and not L.AutoLoginAttempted then
+                L.AutoLoginAttempted = true
+                pcall(function() L.Login(L.Key) end)
+            end
             if L.Pending then L.Auth.Tick() end
             if L.Dirty and (not L.SaveRetryAt or os.time()>=L.SaveRetryAt or os.time()<L.SaveRetryAt-30) then L.Save() end
             if L.Authorized then
@@ -16351,9 +16419,7 @@ if type(previousSettingsRunner) == "table" and previousSettingsRunner.Timer and 
     pcall(function() previousSettingsRunner.Owner:RemoveGameTimer(previousSettingsRunner.Timer) end)
 end
 _G.__MasterShotFastRunner = g_masterahsanyt_FastRunnerToken
-local function g_masterahsanyt_FastTick()
-    if _G.__MasterShotFastRunner ~= g_masterahsanyt_FastRunnerToken then return end
-    
+
 -- ============================================================================
 -- ============================================================================
 -- MANSY GAMING VIP - FLOATING MENU & TELEGRAM SYSTEM
@@ -16376,19 +16442,41 @@ end
 _G.LaunchTelegram = LaunchTelegram
 
 do
-    local vectorClass = import("Vector2D")
-    local colorClass = import("LinearColor")
-    local slateClass = import("SlateColor")
+    local vectorClass = rawget(_G, "FVector2D") or import("Vector2D")
+    local colorClass = rawget(_G, "FLinearColor") or import("LinearColor")
+    local slateClass = rawget(_G, "FSlateColor") or import("SlateColor")
     local CGame = import("GameplayStatics")
     local UEnums = _ENV.UEnums or rawget(_G, "UEnums") or (pcall(import, "UEnums") and import("UEnums"))
-    local ESlateVisibility = UEnums and UEnums.ESlateVisibility
+    local enums = (UEnums and UEnums.ESlateVisibility) or {
+        Visible = 0,
+        Collapsed = 1,
+        Hidden = 2,
+        HitTestInvisible = 3,
+        SelfHitTestInvisible = 4
+    }
+    local VIS_VISIBLE = enums.Visible or 0
+    local VIS_PASSIVE = enums.SelfHitTestInvisible or 4
+    local VIS_COLLAPSED = enums.Collapsed or 1
 
-    local function vec(x, y) return vectorClass(x, y) end
-    local function col(r, g, b, a)
-        local function lin(v) v = v / 255; if v <= 0.04045 then return v / 12.92 end; return ((v + 0.055) / 1.055) ^ 2.4 end
-        return colorClass(lin(r), lin(g), lin(b), a or 1)
+    local function vec(x, y)
+        if vectorClass then return vectorClass(x, y) end
+        return {X = x, Y = y}
     end
-    local function slate(r, g, b, a) return slateClass(col(r, g, b, a)) end
+
+    local function color(r, g, b, a)
+        local function lin(v)
+            v = v / 255
+            if v <= 0.04045 then return v / 12.92 end
+            return ((v + 0.055) / 1.055) ^ 2.4
+        end
+        if colorClass then return colorClass(lin(r), lin(g), lin(b), a or 1.0) end
+        return {R = lin(r), G = lin(g), B = lin(b), A = a or 1.0}
+    end
+
+    local function slate(r, g, b, a)
+        if slateClass then return slateClass(color(r, g, b, a or 1.0)) end
+        return color(r, g, b, a or 1.0)
+    end
 
     local function valid(obj)
         if not obj then return false end
@@ -16399,32 +16487,15 @@ do
         return true
     end
 
-    local function setVis(w, v)
+    local function visibility(w, v)
         if not valid(w) then return end
         local fn = w.SetWidgetVisibility or w.SetVisibility
-        if fn then pcall(fn, w, v) end
+        if type(fn) == "function" then pcall(fn, w, v) end
     end
 
-    local function getRootCanvas()
-        local ok, InGameUITools = pcall(require, "GameLua.Mod.BaseMod.Common.UI.InGameUITools")
-        if ok and InGameUITools and InGameUITools.GetMainControlBaseUI then
-            local ok2, mainUI = pcall(InGameUITools.GetMainControlBaseUI)
-            if ok2 and valid(mainUI) then
-                if valid(mainUI.CanvasPanel_0) then return mainUI.CanvasPanel_0 end
-                if valid(mainUI.CanvasPanel_42) then return mainUI.CanvasPanel_42 end
-            end
-        end
-        local UIManager = rawget(_G, "UIManager") or (pcall(require, "client.slua_ui_framework.manager") and require("client.slua_ui_framework.manager"))
-        if UIManager and UIManager.GetRootWidget and valid(UIManager.GetRootWidget()) then
-            local root = UIManager.GetRootWidget()
-            if valid(root.CanvasPanel_0) then return root.CanvasPanel_0 end
-            return root
-        end
-        if rawget(_G, "slua_GameFrontendHUD") and valid(_G.slua_GameFrontendHUD) then
-            local hud = _G.slua_GameFrontendHUD
-            if valid(hud.CanvasPanel_0) then return hud.CanvasPanel_0 end
-        end
-        return nil
+    local function make(className, outer)
+        local w = CGame:NewObjectFromPath("/Script/UMG." .. className, outer)
+        return w
     end
 
     local fontObject
@@ -16433,21 +16504,83 @@ do
         if loaded and valid(obj) then fontObject = obj end
     end
 
-    local function makeWidget(className, outer)
-        local w = CGame:NewObjectFromPath("/Script/UMG." .. className, outer)
-        return w
-    end
-
     local function styleText(w, size, r, g, b, a, bold)
         local font = w.Font
         if font then
-            if type(font) == "table" then local copy = {}; for k, v in pairs(font) do copy[k] = v end; font = copy end
+            if type(font) == "table" then
+                local copy = {}
+                for k, v in pairs(font) do copy[k] = v end
+                font = copy
+            end
             font.Size = size
-            if fontObject then font.FontObject = fontObject; font.TypefaceFontName = bold and "Bold" or "Regular" end
+            if fontObject then
+                font.FontObject = fontObject
+                font.TypefaceFontName = bold and "Bold" or "Regular"
+            end
             w:SetFont(font)
         end
-        w:SetColorAndOpacity(slate(r, g, b, a or 255))
-        pcall(function() w:SetShadowOffset(vec(0, 0)); w:SetShadowColorAndOpacity(colorClass(0, 0, 0, 0)) end)
+        if slateClass and type(w.SetColorAndOpacity) == "function" then
+            pcall(function() w:SetColorAndOpacity(slate(r, g, b, a or 1.0)) end)
+        end
+        pcall(function()
+            w:SetShadowOffset(vec(0, 0))
+            w:SetShadowColorAndOpacity(color(0, 0, 0, 0))
+        end)
+    end
+
+    local function getActiveCanvas()
+        -- 1. In-Game Main UI
+        local ok1, tools = pcall(require, "GameLua.Mod.BaseMod.Common.UI.InGameUITools")
+        if ok1 and tools and type(tools.GetMainControlBaseUI) == "function" then
+            local okMain, mainUI = pcall(tools.GetMainControlBaseUI)
+            if okMain and valid(mainUI) then
+                if valid(mainUI.CanvasPanel_0) then return mainUI.CanvasPanel_0 end
+                if valid(mainUI.CanvasPanel_42) then return mainUI.CanvasPanel_42 end
+                if type(mainUI.AddChildToCanvas) == "function" then return mainUI end
+            end
+        end
+
+        -- 2. slua_GameFrontendHUD
+        if rawget(_G, "slua_GameFrontendHUD") and valid(_G.slua_GameFrontendHUD) then
+            local hud = _G.slua_GameFrontendHUD
+            if valid(hud.CanvasPanel_0) then return hud.CanvasPanel_0 end
+            if hud.GetHUDWidget and valid(hud:GetHUDWidget()) then
+                local hw = hud:GetHUDWidget()
+                if valid(hw.CanvasPanel_0) then return hw.CanvasPanel_0 end
+            end
+        end
+
+        -- 3. Lobby UI
+        local okLMC, LMC = pcall(require, "client.slua.logic.lobby.Main.Lobby_Main_Control")
+        if okLMC and LMC and type(LMC.GetCurPage) == "function" then
+            local okP, page = pcall(LMC.GetCurPage)
+            if okP and valid(page) then
+                if valid(page.CanvasPanel_0) then return page.CanvasPanel_0 end
+                if valid(page.UIRoot) and valid(page.UIRoot.CanvasPanel_0) then return page.UIRoot.CanvasPanel_0 end
+                if valid(page.RootCanvas) then return page.RootCanvas end
+                if type(page.AddChildToCanvas) == "function" then return page end
+            end
+        end
+
+        -- 4. UIManager Root
+        local okUIM, UIM = pcall(require, "client.slua_ui_framework.manager")
+        if okUIM and UIM and type(UIM.GetRootWidget) == "function" then
+            local okR, root = pcall(UIM.GetRootWidget)
+            if okR and valid(root) then
+                if valid(root.CanvasPanel_0) then return root.CanvasPanel_0 end
+                if valid(root.RootCanvas) then return root.RootCanvas end
+                if type(root.AddChildToCanvas) == "function" then return root end
+            end
+        end
+
+        -- 5. Login/Welcome runtime parent
+        local l = _G.LunarLoginRuntime
+        if l then
+            if l.LoginUI and valid(l.LoginUI.Parent) then return l.LoginUI.Parent end
+            if l.WelcomeUI and valid(l.WelcomeUI.Parent) then return l.WelcomeUI.Parent end
+        end
+
+        return nil
     end
 
     local M = {
@@ -16455,21 +16588,21 @@ do
         FloatingBtn = nil,
         Window = nil,
         IsOpen = false,
-        ActiveTab = 1, -- 1: AIMBOT, 2: ESP, 3: MISC, 4: SKINS
+        ActiveTab = 1,
         AnimScale = 1.0,
         AnimOpacity = 1.0,
         TargetScale = 1.0,
         TargetOpacity = 1.0,
         IsAnimating = false,
-        TabButtons = {},
-        OptionWidgets = {},
         PulseTimer = 0,
+        OptionWidgets = {},
+        TabBorders = {},
+        TabTexts = {},
     }
     _G.MansyFloatingMenu = M
 
     local function getFeatures() return _G.LunarFeatures end
 
-    -- Feature definitions for each tab
     local function getTabItems(tabId)
         local items = {}
         if tabId == 1 then -- AIMBOT
@@ -16666,38 +16799,51 @@ do
 
     -- Build the Floating Button (FAB)
     local function buildFloatingButton(parentCanvas)
-        local btnContainer = makeWidget("CanvasPanel", parentCanvas)
+        local btnContainer = make("CanvasPanel", parentCanvas)
         local btnSlot = parentCanvas:AddChildToCanvas(btnContainer)
         btnSlot:SetAutoSize(false)
-        btnSlot:SetSize(vec(54, 54))
-        btnSlot:SetPosition(vec(24, 180))
+        btnSlot:SetSize(vec(64, 64))
+
+        -- Anchor to Top-Left safely with notch offset
+        pcall(function()
+            local anchors = btnSlot:GetAnchors()
+            anchors.Minimum = vec(0.0, 0.0)
+            anchors.Maximum = vec(0.0, 0.0)
+            btnSlot:SetAnchors(anchors)
+            btnSlot:SetAlignment(vec(0.0, 0.0))
+        end)
+        btnSlot:SetPosition(vec(70, 140))
         btnSlot:SetZOrder(9999)
+        visibility(btnContainer, VIS_VISIBLE)
 
-        -- Glow Border
-        local border = makeWidget("Border", btnContainer)
-        border:SetBrushColor(col(0, 215, 255, 230))
+        -- Glow Border (Neon Cyan / Electric Blue)
+        local border = make("Border", btnContainer)
+        border:SetBrushColor(color(0, 215, 255, 0.95))
+        visibility(border, VIS_PASSIVE)
         local bSlot = btnContainer:AddChildToCanvas(border)
-        bSlot:SetAutoSize(false); bSlot:SetPosition(vec(0, 0)); bSlot:SetSize(vec(54, 54)); bSlot:SetZOrder(1)
+        bSlot:SetAutoSize(false); bSlot:SetPosition(vec(0, 0)); bSlot:SetSize(vec(64, 64)); bSlot:SetZOrder(1)
 
-        -- Inner Dark Background
-        local inner = makeWidget("Border", btnContainer)
-        inner:SetBrushColor(col(12, 18, 30, 245))
+        -- Inner Dark Obsidian Background
+        local inner = make("Border", btnContainer)
+        inner:SetBrushColor(color(10, 16, 28, 0.96))
+        visibility(inner, VIS_PASSIVE)
         local iSlot = btnContainer:AddChildToCanvas(inner)
-        iSlot:SetAutoSize(false); iSlot:SetPosition(vec(2.5, 2.5)); iSlot:SetSize(vec(49, 49)); iSlot:SetZOrder(2)
-
-        -- Click Button
-        local clickBtn = makeWidget("Button", btnContainer)
-        pcall(function() clickBtn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
-        local cSlot = btnContainer:AddChildToCanvas(clickBtn)
-        cSlot:SetAutoSize(false); cSlot:SetPosition(vec(0, 0)); cSlot:SetSize(vec(54, 54)); cSlot:SetZOrder(4)
+        iSlot:SetAutoSize(false); iSlot:SetPosition(vec(3, 3)); iSlot:SetSize(vec(58, 58)); iSlot:SetZOrder(2)
 
         -- Icon Text
-        local icon = makeWidget("TextBlock", btnContainer)
+        local icon = make("TextBlock", btnContainer)
         icon:SetText("⚡")
-        styleText(icon, 22, 0, 230, 255, 255, true)
-        setVis(icon, ESlateVisibility.SelfHitTestInvisible)
+        styleText(icon, 26, 0, 235, 255, 1.0, true)
+        visibility(icon, VIS_PASSIVE)
         local tSlot = btnContainer:AddChildToCanvas(icon)
-        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(16, 12)); tSlot:SetSize(vec(30, 30)); tSlot:SetZOrder(3)
+        tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 13)); tSlot:SetSize(vec(36, 36)); tSlot:SetZOrder(3)
+
+        -- Click Button
+        local clickBtn = make("Button", btnContainer)
+        pcall(function() clickBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+        visibility(clickBtn, VIS_VISIBLE)
+        local cSlot = btnContainer:AddChildToCanvas(clickBtn)
+        cSlot:SetAutoSize(false); cSlot:SetPosition(vec(0, 0)); cSlot:SetSize(vec(64, 64)); cSlot:SetZOrder(4)
 
         clickBtn.OnClicked:Add(function()
             M.Toggle()
@@ -16733,39 +16879,42 @@ do
             local itemY = startY + rowIdx * (rowHeight + 6)
 
             -- Item Card Background
-            local card = makeWidget("Border", M.ContentCanvas)
-            card:SetBrushColor(col(16, 22, 36, 220))
+            local card = make("Border", M.ContentCanvas)
+            card:SetBrushColor(color(16, 22, 36, 0.85))
+            visibility(card, VIS_PASSIVE)
             local cardSlot = M.ContentCanvas:AddChildToCanvas(card)
             cardSlot:SetAutoSize(false); cardSlot:SetPosition(vec(itemX, itemY)); cardSlot:SetSize(vec(colWidth, rowHeight)); cardSlot:SetZOrder(2)
             table.insert(M.OptionWidgets, card)
 
             -- Item Title
-            local titleText = makeWidget("TextBlock", M.ContentCanvas)
+            local titleText = make("TextBlock", M.ContentCanvas)
             titleText:SetText(item.title)
-            styleText(titleText, 13, 215, 230, 250, 255, false)
-            setVis(titleText, ESlateVisibility.SelfHitTestInvisible)
+            styleText(titleText, 13, 215, 230, 250, 1.0, false)
+            visibility(titleText, VIS_PASSIVE)
             local titleSlot = M.ContentCanvas:AddChildToCanvas(titleText)
             titleSlot:SetAutoSize(false); titleSlot:SetPosition(vec(itemX + 8, itemY + 9)); titleSlot:SetSize(vec(colWidth - 85, 22)); titleSlot:SetZOrder(3)
             table.insert(M.OptionWidgets, titleText)
 
             if item.kind == "switch" then
                 local isEnabled = item.get() == true
-                local btnBorder = makeWidget("Border", M.ContentCanvas)
-                btnBorder:SetBrushColor(isEnabled and col(0, 215, 120, 240) or col(45, 55, 75, 200))
+                local btnBorder = make("Border", M.ContentCanvas)
+                btnBorder:SetBrushColor(isEnabled and color(0, 215, 120, 0.95) or color(45, 55, 75, 0.8))
+                visibility(btnBorder, VIS_PASSIVE)
                 local bbSlot = M.ContentCanvas:AddChildToCanvas(btnBorder)
                 bbSlot:SetAutoSize(false); bbSlot:SetPosition(vec(itemX + colWidth - 72, itemY + 5)); bbSlot:SetSize(vec(64, 28)); bbSlot:SetZOrder(3)
                 table.insert(M.OptionWidgets, btnBorder)
 
-                local btnText = makeWidget("TextBlock", M.ContentCanvas)
+                local btnText = make("TextBlock", M.ContentCanvas)
                 btnText:SetText(isEnabled and "ON" or "OFF")
-                styleText(btnText, 12, isEnabled and 255 or 170, isEnabled and 255 or 180, isEnabled and 255 or 195, 255, true)
-                setVis(btnText, ESlateVisibility.SelfHitTestInvisible)
+                styleText(btnText, 12, isEnabled and 255 or 170, isEnabled and 255 or 180, isEnabled and 255 or 195, 1.0, true)
+                visibility(btnText, VIS_PASSIVE)
                 local btSlot = M.ContentCanvas:AddChildToCanvas(btnText)
                 btSlot:SetAutoSize(false); btSlot:SetPosition(vec(itemX + colWidth - 52, itemY + 10)); btSlot:SetSize(vec(30, 20)); btSlot:SetZOrder(5)
                 table.insert(M.OptionWidgets, btnText)
 
-                local btn = makeWidget("Button", M.ContentCanvas)
-                pcall(function() btn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
+                local btn = make("Button", M.ContentCanvas)
+                pcall(function() btn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+                visibility(btn, VIS_VISIBLE)
                 local bSlot = M.ContentCanvas:AddChildToCanvas(btn)
                 bSlot:SetAutoSize(false); bSlot:SetPosition(vec(itemX + colWidth - 72, itemY + 5)); bSlot:SetSize(vec(64, 28)); bSlot:SetZOrder(6)
                 table.insert(M.OptionWidgets, btn)
@@ -16774,28 +16923,30 @@ do
                     local cur = item.get() == true
                     item.set(not cur)
                     local now = item.get() == true
-                    btnBorder:SetBrushColor(now and col(0, 215, 120, 240) or col(45, 55, 75, 200))
+                    btnBorder:SetBrushColor(now and color(0, 215, 120, 0.95) or color(45, 55, 75, 0.8))
                     btnText:SetText(now and "ON" or "OFF")
-                    styleText(btnText, 12, now and 255 or 170, now and 255 or 180, now and 255 or 195, 255, true)
+                    styleText(btnText, 12, now and 255 or 170, now and 255 or 180, now and 255 or 195, 1.0, true)
                 end)
 
             elseif item.kind == "cycle" then
-                local cycleBorder = makeWidget("Border", M.ContentCanvas)
-                cycleBorder:SetBrushColor(col(0, 160, 240, 220))
+                local cycleBorder = make("Border", M.ContentCanvas)
+                cycleBorder:SetBrushColor(color(0, 160, 240, 0.85))
+                visibility(cycleBorder, VIS_PASSIVE)
                 local cbSlot = M.ContentCanvas:AddChildToCanvas(cycleBorder)
                 cbSlot:SetAutoSize(false); cbSlot:SetPosition(vec(itemX + colWidth - 84, itemY + 5)); cbSlot:SetSize(vec(76, 28)); cbSlot:SetZOrder(3)
                 table.insert(M.OptionWidgets, cycleBorder)
 
-                local cycleText = makeWidget("TextBlock", M.ContentCanvas)
+                local cycleText = make("TextBlock", M.ContentCanvas)
                 cycleText:SetText(tostring(item.get()))
-                styleText(cycleText, 11, 255, 255, 255, 255, true)
-                setVis(cycleText, ESlateVisibility.SelfHitTestInvisible)
+                styleText(cycleText, 11, 255, 255, 255, 1.0, true)
+                visibility(cycleText, VIS_PASSIVE)
                 local ctSlot = M.ContentCanvas:AddChildToCanvas(cycleText)
                 ctSlot:SetAutoSize(false); ctSlot:SetPosition(vec(itemX + colWidth - 76, itemY + 10)); ctSlot:SetSize(vec(60, 20)); ctSlot:SetZOrder(5)
                 table.insert(M.OptionWidgets, cycleText)
 
-                local btn = makeWidget("Button", M.ContentCanvas)
-                pcall(function() btn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
+                local btn = make("Button", M.ContentCanvas)
+                pcall(function() btn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+                visibility(btn, VIS_VISIBLE)
                 local bSlot = M.ContentCanvas:AddChildToCanvas(btn)
                 bSlot:SetAutoSize(false); bSlot:SetPosition(vec(itemX + colWidth - 84, itemY + 5)); bSlot:SetSize(vec(76, 28)); bSlot:SetZOrder(6)
                 table.insert(M.OptionWidgets, btn)
@@ -16806,38 +16957,37 @@ do
                 end)
 
             elseif item.kind == "stepper" then
-                -- Minus Button
-                local mBtn = makeWidget("Button", M.ContentCanvas)
-                pcall(function() mBtn:SetBackgroundColor(col(25, 35, 55, 220)) end)
+                local mBtn = make("Button", M.ContentCanvas)
+                pcall(function() mBtn:SetBackgroundColor(color(25, 35, 55, 0.85)) end)
+                visibility(mBtn, VIS_VISIBLE)
                 local mbSlot = M.ContentCanvas:AddChildToCanvas(mBtn)
                 mbSlot:SetAutoSize(false); mbSlot:SetPosition(vec(itemX + colWidth - 88, itemY + 6)); mbSlot:SetSize(vec(24, 26)); mbSlot:SetZOrder(4)
                 table.insert(M.OptionWidgets, mBtn)
 
-                local mText = makeWidget("TextBlock", mBtn)
+                local mText = make("TextBlock", mBtn)
                 mText:SetText("-")
-                styleText(mText, 14, 200, 225, 255, 255, true)
-                setVis(mText, ESlateVisibility.SelfHitTestInvisible)
+                styleText(mText, 14, 200, 225, 255, 1.0, true)
+                visibility(mText, VIS_PASSIVE)
 
-                -- Value Text
-                local valText = makeWidget("TextBlock", M.ContentCanvas)
+                local valText = make("TextBlock", M.ContentCanvas)
                 valText:SetText(tostring(item.get()))
-                styleText(valText, 12, 0, 215, 255, 255, true)
-                setVis(valText, ESlateVisibility.SelfHitTestInvisible)
+                styleText(valText, 12, 0, 215, 255, 1.0, true)
+                visibility(valText, VIS_PASSIVE)
                 local vtSlot = M.ContentCanvas:AddChildToCanvas(valText)
                 vtSlot:SetAutoSize(false); vtSlot:SetPosition(vec(itemX + colWidth - 60, itemY + 11)); vtSlot:SetSize(vec(30, 20)); vtSlot:SetZOrder(3)
                 table.insert(M.OptionWidgets, valText)
 
-                -- Plus Button
-                local pBtn = makeWidget("Button", M.ContentCanvas)
-                pcall(function() pBtn:SetBackgroundColor(col(25, 35, 55, 220)) end)
+                local pBtn = make("Button", M.ContentCanvas)
+                pcall(function() pBtn:SetBackgroundColor(color(25, 35, 55, 0.85)) end)
+                visibility(pBtn, VIS_VISIBLE)
                 local pbSlot = M.ContentCanvas:AddChildToCanvas(pBtn)
                 pbSlot:SetAutoSize(false); pbSlot:SetPosition(vec(itemX + colWidth - 28, itemY + 6)); pbSlot:SetSize(vec(24, 26)); pbSlot:SetZOrder(4)
                 table.insert(M.OptionWidgets, pBtn)
 
-                local pText = makeWidget("TextBlock", pBtn)
+                local pText = make("TextBlock", pBtn)
                 pText:SetText("+")
-                styleText(pText, 14, 200, 225, 255, 255, true)
-                setVis(pText, ESlateVisibility.SelfHitTestInvisible)
+                styleText(pText, 14, 200, 225, 255, 1.0, true)
+                visibility(pText, VIS_PASSIVE)
 
                 mBtn.OnClicked:Add(function()
                     local cur = tonumber(item.get()) or item.min
@@ -16858,75 +17008,84 @@ do
     -- Build the Floating Mod Menu Window
     local function buildWindow(parentCanvas)
         local W, H = 550, 360
-        local winContainer = makeWidget("CanvasPanel", parentCanvas)
+        local winContainer = make("CanvasPanel", parentCanvas)
         local winSlot = parentCanvas:AddChildToCanvas(winContainer)
         winSlot:SetAutoSize(false)
         winSlot:SetSize(vec(W, H))
 
-        local anchors = winSlot:GetAnchors()
-        anchors.Minimum = vec(0.5, 0.5)
-        anchors.Maximum = vec(0.5, 0.5)
-        winSlot:SetAnchors(anchors)
-        winSlot:SetAlignment(vec(0.5, 0.5))
+        pcall(function()
+            local anchors = winSlot:GetAnchors()
+            anchors.Minimum = vec(0.5, 0.5)
+            anchors.Maximum = vec(0.5, 0.5)
+            winSlot:SetAnchors(anchors)
+            winSlot:SetAlignment(vec(0.5, 0.5))
+        end)
         winSlot:SetPosition(vec(0, 0))
         winSlot:SetZOrder(9998)
         winContainer:SetRenderTransformPivot(vec(0.5, 0.5))
+        visibility(winContainer, VIS_COLLAPSED)
 
         -- Outer Glow Border
-        local outerBorder = makeWidget("Border", winContainer)
-        outerBorder:SetBrushColor(col(0, 200, 255, 220))
+        local outerBorder = make("Border", winContainer)
+        outerBorder:SetBrushColor(color(0, 200, 255, 0.9))
+        visibility(outerBorder, VIS_PASSIVE)
         local obSlot = winContainer:AddChildToCanvas(outerBorder)
         obSlot:SetAutoSize(false); obSlot:SetPosition(vec(0, 0)); obSlot:SetSize(vec(W, H)); obSlot:SetZOrder(1)
 
         -- Inner Deep Obsidian Glass Panel
-        local innerBg = makeWidget("Border", winContainer)
-        innerBg:SetBrushColor(col(10, 14, 24, 246))
+        local innerBg = make("Border", winContainer)
+        innerBg:SetBrushColor(color(10, 14, 24, 0.96))
+        visibility(innerBg, VIS_PASSIVE)
         local ibSlot = winContainer:AddChildToCanvas(innerBg)
         ibSlot:SetAutoSize(false); ibSlot:SetPosition(vec(2, 2)); ibSlot:SetSize(vec(W - 4, H - 4)); ibSlot:SetZOrder(2)
 
         -- Top Header Background
-        local headerBg = makeWidget("Border", winContainer)
-        headerBg:SetBrushColor(col(16, 22, 36, 250))
+        local headerBg = make("Border", winContainer)
+        headerBg:SetBrushColor(color(16, 22, 36, 0.98))
+        visibility(headerBg, VIS_PASSIVE)
         local hSlot = winContainer:AddChildToCanvas(headerBg)
         hSlot:SetAutoSize(false); hSlot:SetPosition(vec(4, 4)); hSlot:SetSize(vec(W - 8, 48)); hSlot:SetZOrder(3)
 
         -- Glowing Header Line
-        local headerLine = makeWidget("Border", winContainer)
-        headerLine:SetBrushColor(col(0, 220, 255, 255))
+        local headerLine = make("Border", winContainer)
+        headerLine:SetBrushColor(color(0, 220, 255, 1.0))
+        visibility(headerLine, VIS_PASSIVE)
         local hlSlot = winContainer:AddChildToCanvas(headerLine)
         hlSlot:SetAutoSize(false); hlSlot:SetPosition(vec(4, 50)); hlSlot:SetSize(vec(W - 8, 2)); hlSlot:SetZOrder(4)
 
         -- Title
-        local title = makeWidget("TextBlock", winContainer)
+        local title = make("TextBlock", winContainer)
         title:SetText("⚡ MANSY GAMING VIP ⚡")
-        styleText(title, 17, 255, 255, 255, 255, true)
-        setVis(title, ESlateVisibility.SelfHitTestInvisible)
+        styleText(title, 17, 255, 255, 255, 1.0, true)
+        visibility(title, VIS_PASSIVE)
         local tSlot = winContainer:AddChildToCanvas(title)
         tSlot:SetAutoSize(false); tSlot:SetPosition(vec(18, 12)); tSlot:SetSize(vec(250, 26)); tSlot:SetZOrder(5)
 
         -- Status Subtitle
-        local sub = makeWidget("TextBlock", winContainer)
+        local sub = make("TextBlock", winContainer)
         sub:SetText("● STATUS: ACTIVE | V10.0 ULTRA")
-        styleText(sub, 11, 0, 235, 130, 255, true)
-        setVis(sub, ESlateVisibility.SelfHitTestInvisible)
+        styleText(sub, 11, 0, 235, 130, 1.0, true)
+        visibility(sub, VIS_PASSIVE)
         local sSlot = winContainer:AddChildToCanvas(sub)
         sSlot:SetAutoSize(false); sSlot:SetPosition(vec(270, 16)); sSlot:SetSize(vec(200, 20)); sSlot:SetZOrder(5)
 
         -- Close Button [ ✕ ]
-        local closeBorder = makeWidget("Border", winContainer)
-        closeBorder:SetBrushColor(col(220, 50, 60, 230))
+        local closeBorder = make("Border", winContainer)
+        closeBorder:SetBrushColor(color(220, 50, 60, 0.9))
+        visibility(closeBorder, VIS_PASSIVE)
         local cbSlot = winContainer:AddChildToCanvas(closeBorder)
         cbSlot:SetAutoSize(false); cbSlot:SetPosition(vec(W - 44, 10)); cbSlot:SetSize(vec(32, 32)); cbSlot:SetZOrder(5)
 
-        local closeText = makeWidget("TextBlock", winContainer)
+        local closeText = make("TextBlock", winContainer)
         closeText:SetText("✕")
-        styleText(closeText, 14, 255, 255, 255, 255, true)
-        setVis(closeText, ESlateVisibility.SelfHitTestInvisible)
+        styleText(closeText, 14, 255, 255, 255, 1.0, true)
+        visibility(closeText, VIS_PASSIVE)
         local ctSlot = winContainer:AddChildToCanvas(closeText)
         ctSlot:SetAutoSize(false); ctSlot:SetPosition(vec(W - 33, 16)); ctSlot:SetSize(vec(20, 20)); ctSlot:SetZOrder(6)
 
-        local closeBtn = makeWidget("Button", winContainer)
-        pcall(function() closeBtn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
+        local closeBtn = make("Button", winContainer)
+        pcall(function() closeBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+        visibility(closeBtn, VIS_VISIBLE)
         local cBtnSlot = winContainer:AddChildToCanvas(closeBtn)
         cBtnSlot:SetAutoSize(false); cBtnSlot:SetPosition(vec(W - 44, 10)); cBtnSlot:SetSize(vec(32, 32)); cBtnSlot:SetZOrder(7)
 
@@ -16946,22 +17105,24 @@ do
             local ty = 56
             local isAct = (tIdx == M.ActiveTab)
 
-            local tBorder = makeWidget("Border", winContainer)
-            tBorder:SetBrushColor(isAct and col(0, 180, 240, 220) or col(20, 28, 44, 200))
+            local tBorder = make("Border", winContainer)
+            tBorder:SetBrushColor(isAct and color(0, 180, 240, 0.85) or color(20, 28, 44, 0.8))
+            visibility(tBorder, VIS_PASSIVE)
             local tbSlot = winContainer:AddChildToCanvas(tBorder)
             tbSlot:SetAutoSize(false); tbSlot:SetPosition(vec(tx, ty)); tbSlot:SetSize(vec(tabW, tabH)); tbSlot:SetZOrder(4)
             table.insert(M.TabBorders, tBorder)
 
-            local tText = makeWidget("TextBlock", winContainer)
+            local tText = make("TextBlock", winContainer)
             tText:SetText(tName)
-            styleText(tText, 12, isAct and 255 or 160, isAct and 255 or 180, isAct and 255 or 210, 255, true)
-            setVis(tText, ESlateVisibility.SelfHitTestInvisible)
+            styleText(tText, 12, isAct and 255 or 160, isAct and 255 or 180, isAct and 255 or 210, 1.0, true)
+            visibility(tText, VIS_PASSIVE)
             local ttSlot = winContainer:AddChildToCanvas(tText)
             ttSlot:SetAutoSize(false); ttSlot:SetPosition(vec(tx + 18, ty + 7)); ttSlot:SetSize(vec(tabW - 20, 20)); ttSlot:SetZOrder(5)
             table.insert(M.TabTexts, tText)
 
-            local tBtn = makeWidget("Button", winContainer)
-            pcall(function() tBtn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
+            local tBtn = make("Button", winContainer)
+            pcall(function() tBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+            visibility(tBtn, VIS_VISIBLE)
             local tBtnSlot = winContainer:AddChildToCanvas(tBtn)
             tBtnSlot:SetAutoSize(false); tBtnSlot:SetPosition(vec(tx, ty)); tBtnSlot:SetSize(vec(tabW, tabH)); tBtnSlot:SetZOrder(6)
 
@@ -16969,40 +17130,44 @@ do
                 M.ActiveTab = tIdx
                 for i = 1, #tabNames do
                     local act = (i == M.ActiveTab)
-                    M.TabBorders[i]:SetBrushColor(act and col(0, 180, 240, 220) or col(20, 28, 44, 200))
-                    styleText(M.TabTexts[i], 12, act and 255 or 160, act and 255 or 180, act and 255 or 210, 255, true)
+                    M.TabBorders[i]:SetBrushColor(act and color(0, 180, 240, 0.85) or color(20, 28, 44, 0.8))
+                    styleText(M.TabTexts[i], 12, act and 255 or 160, act and 255 or 180, act and 255 or 210, 1.0, true)
                 end
                 renderTabContent()
             end)
         end
 
         -- Content Body Canvas
-        local contentCanvas = makeWidget("CanvasPanel", winContainer)
+        local contentCanvas = make("CanvasPanel", winContainer)
+        visibility(contentCanvas, VIS_VISIBLE)
         local ccSlot = winContainer:AddChildToCanvas(contentCanvas)
         ccSlot:SetAutoSize(false); ccSlot:SetPosition(vec(4, 94)); ccSlot:SetSize(vec(W - 8, 220)); ccSlot:SetZOrder(3)
         M.ContentCanvas = contentCanvas
 
         -- Footer Bar
-        local footerBg = makeWidget("Border", winContainer)
-        footerBg:SetBrushColor(col(14, 18, 30, 240))
+        local footerBg = make("Border", winContainer)
+        footerBg:SetBrushColor(color(14, 18, 30, 0.95))
+        visibility(footerBg, VIS_PASSIVE)
         local fbSlot = winContainer:AddChildToCanvas(footerBg)
         fbSlot:SetAutoSize(false); fbSlot:SetPosition(vec(4, H - 42)); fbSlot:SetSize(vec(W - 8, 38)); fbSlot:SetZOrder(3)
 
         -- Telegram Channel Button
-        local tgBorder = makeWidget("Border", winContainer)
-        tgBorder:SetBrushColor(col(0, 136, 204, 230)) -- Telegram Blue
+        local tgBorder = make("Border", winContainer)
+        tgBorder:SetBrushColor(color(0, 136, 204, 0.9))
+        visibility(tgBorder, VIS_PASSIVE)
         local tgbSlot = winContainer:AddChildToCanvas(tgBorder)
         tgbSlot:SetAutoSize(false); tgbSlot:SetPosition(vec(14, H - 36)); tgbSlot:SetSize(vec(240, 26)); tgbSlot:SetZOrder(4)
 
-        local tgText = makeWidget("TextBlock", winContainer)
+        local tgText = make("TextBlock", winContainer)
         tgText:SetText("📢 TELEGRAM CHANNEL")
-        styleText(tgText, 11, 255, 255, 255, 255, true)
-        setVis(tgText, ESlateVisibility.SelfHitTestInvisible)
+        styleText(tgText, 11, 255, 255, 255, 1.0, true)
+        visibility(tgText, VIS_PASSIVE)
         local tgtSlot = winContainer:AddChildToCanvas(tgText)
         tgtSlot:SetAutoSize(false); tgtSlot:SetPosition(vec(45, H - 31)); tgtSlot:SetSize(vec(200, 20)); tgtSlot:SetZOrder(5)
 
-        local tgBtn = makeWidget("Button", winContainer)
-        pcall(function() tgBtn:SetBackgroundColor(colorClass(0, 0, 0, 0)) end)
+        local tgBtn = make("Button", winContainer)
+        pcall(function() tgBtn:SetBackgroundColor(color(0, 0, 0, 0)) end)
+        visibility(tgBtn, VIS_VISIBLE)
         local tgbBtnSlot = winContainer:AddChildToCanvas(tgBtn)
         tgbBtnSlot:SetAutoSize(false); tgbBtnSlot:SetPosition(vec(14, H - 36)); tgbBtnSlot:SetSize(vec(240, 26)); tgbBtnSlot:SetZOrder(6)
 
@@ -17011,15 +17176,12 @@ do
         end)
 
         -- Security text
-        local secText = makeWidget("TextBlock", winContainer)
+        local secText = make("TextBlock", winContainer)
         secText:SetText("🛡️ BYPASS: SECURE & CLEAN")
-        styleText(secText, 11, 130, 160, 200, 255, false)
-        setVis(secText, ESlateVisibility.SelfHitTestInvisible)
+        styleText(secText, 11, 130, 160, 200, 1.0, false)
+        visibility(secText, VIS_PASSIVE)
         local secSlot = winContainer:AddChildToCanvas(secText)
         secSlot:SetAutoSize(false); secSlot:SetPosition(vec(300, H - 31)); secSlot:SetSize(vec(220, 20)); secSlot:SetZOrder(4)
-
-        -- Initially hidden
-        setVis(winContainer, ESlateVisibility.Collapsed)
 
         M.Window = {
             Container = winContainer,
@@ -17030,7 +17192,7 @@ do
         if not M.Window or not valid(M.Window.Container) then return end
         M.IsOpen = true
         renderTabContent()
-        setVis(M.Window.Container, ESlateVisibility.SelfHitTestInvisible)
+        visibility(M.Window.Container, VIS_VISIBLE)
         M.AnimScale = 0.85
         M.AnimOpacity = 0.0
         M.TargetScale = 1.0
@@ -17056,30 +17218,36 @@ do
         end
     end
 
-    -- Update called from FastTick
     function M.Tick()
-        -- 1. Ensure Root Canvas and Widgets exist
-        local canvas = getRootCanvas()
+        local canvas = getActiveCanvas()
         if not canvas or not valid(canvas) then return end
 
         if M.Root ~= canvas or not M.FloatingBtn or not valid(M.FloatingBtn.Container) or not M.Window or not valid(M.Window.Container) then
-            M.Root = canvas
             pcall(function()
+                if M.FloatingBtn and valid(M.FloatingBtn.Container) then
+                    M.FloatingBtn.Container:RemoveFromParent()
+                end
+                if M.Window and valid(M.Window.Container) then
+                    M.Window.Container:RemoveFromParent()
+                end
+            end)
+            local okBuild = pcall(function()
                 buildFloatingButton(canvas)
                 buildWindow(canvas)
             end)
+            if okBuild then
+                M.Root = canvas
+            end
         end
 
-        -- 2. Pulse Animation on Floating Button
         if M.FloatingBtn and valid(M.FloatingBtn.Border) then
             M.PulseTimer = (M.PulseTimer or 0) + 0.05
             local pulse = 0.75 + 0.25 * math.sin(M.PulseTimer * 3.5)
             pcall(function()
-                M.FloatingBtn.Border:SetBrushColor(col(0, math.floor(190 + 35 * pulse), 255, math.floor(220 * pulse)))
+                M.FloatingBtn.Border:SetBrushColor(color(0, math.floor(190 + 35 * pulse), 255, 0.95))
             end)
         end
 
-        -- 3. Smooth Scale & Opacity Animation for Window
         if M.IsAnimating and M.Window and valid(M.Window.Container) then
             M.AnimScale = M.AnimScale + (M.TargetScale - M.AnimScale) * 0.4
             M.AnimOpacity = M.AnimOpacity + (M.TargetOpacity - M.AnimOpacity) * 0.4
@@ -17088,7 +17256,7 @@ do
                 M.AnimOpacity = M.TargetOpacity
                 M.IsAnimating = false
                 if M.TargetOpacity <= 0 then
-                    setVis(M.Window.Container, ESlateVisibility.Collapsed)
+                    visibility(M.Window.Container, VIS_COLLAPSED)
                 end
             end
             M.Window.Container:SetRenderScale(vec(M.AnimScale, M.AnimScale))
@@ -17097,8 +17265,22 @@ do
     end
 end
 
+-- Dedicated recurring timer loop running continuously in Lobby and In-Game
+pcall(function()
+    local ticker = require("common.time_ticker")
+    if ticker and ticker.AddTimerLoop then
+        ticker.AddTimerLoop(0, function()
+            if _G.MansyFloatingMenu and _G.MansyFloatingMenu.Tick then
+                pcall(_G.MansyFloatingMenu.Tick)
+            end
+        end, -1, 0.25)
+    end
+end)
 
-g_masterahsanyt_EnsureHackMenu()
+
+local function g_masterahsanyt_FastTick()
+    if _G.__MasterShotFastRunner ~= g_masterahsanyt_FastRunnerToken then return end
+    g_masterahsanyt_EnsureHackMenu()
     local render=_G.__MasterShotESPRunner
     if not render or not render.Due then pcall(g_masterahsanyt_ApplyiPadView) end
     pcall(function()
