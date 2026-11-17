@@ -1,7 +1,18 @@
-.idea/
+# Client-side game files
+3_Game_Lua/
+
+# Dependencies and build artifacts
 node_modules/
-license-server/node_modules/
 2_Cloudflare/node_modules/
+license-server/node_modules/
+.wrangler/
+
+# Environment files and credentials
 .env
+.env.*
 .env.local
+
+# Logs, backups, and IDE files
 *.log
+*.bak
+.idea/

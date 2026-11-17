@@ -1,7 +1,7 @@
-PlayerController — প্রয়োজনীয় ফাইল মাত্র ৬টি
+UIUtil — প্রয়োজনীয় ফাইল মাত্র ৬টি
 
 ১) আপনার PAK
-3_Game_Lua/PlayerControllerBase.lua নিজের PAK-এ আগের পদ্ধতিতে বসান। নতুন PAK বা PAK build tool দেওয়া হয়নি।
+3_Game_Lua/logic_enter_game.lua নিজের PAK-এ আগের পদ্ধতিতে বসান। নতুন PAK বা PAK build tool দেওয়া হয়নি।
 এটি game loader Lua: গেমের original module ফিরিয়ে দিয়ে server-এর online Lua download/run করে। আগের native hook/recovery হুবহু আছে।
 
 ২) GitHub
@@ -43,7 +43,7 @@ Panel-এর request/response protocol একই হলে এই config বদ�
 - GitHub account বদল: repository copy + Cloudflare repository connection বদল; URL একই হলে PAK লাগে না।
 - Cloudflare account/server বদল: নতুন Worker deploy; URL বদলালে game Lua-তে নতুন URL দিয়ে PAK-এর Lua একবার replace করুন।
 - Online filename বদল: worker.mjs-এর import path ও primaryName, online file-এর নাম এবং game Lua-র local path একই নামে বদলান।
-- গেমের PlayerControllerBase.lua নামটি engine-এর জন্য স্থির; এটিকে online filename ভেবে rename করবেন না।
+- গেমের logic_enter_game.lua নামটি engine-এর জন্য স্থির; এটিকে online filename ভেবে rename করবেন না।
 
 SHA256, নির্দিষ্ট download byte length বা marker দিয়ে online Lua আটকানো হয় না। Server-এর নতুন valid UTF-8 Lua text গ্রহণ করা যায়। একটি game process-এ একবার execute হয়; update দেখতে গেম পুরো বন্ধ করে খুলুন।
 
