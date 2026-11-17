@@ -549,7 +549,7 @@ g_masterahsanyt_ESPLoadSettings()
 do
     local licenseScope
 local MasterLicenseConfig = {
-    url = 'https://key.authapi.xyz/server', game = 'BGMI',
+    url = 'https://mansy-license-server.vercel.app/api/verify', game = 'BGMI',
     timeout = 10, clockSkew = 120, expiryPath = nil,
     manualExpiry = "2026-12-31 23:59:59", tamperTolerance = 5,
     secret = 'Vm8Lk7Uj2JmsjCPVPVjrLa7zgfx3uz5E',
@@ -673,7 +673,7 @@ local MasterLicenseCore = (function()
 
     local CreateLocalExpiry = function(cfg)
         local E = {}
-        local expiredText = 'Mod expired. DM @Masterpiece2025 for renewal.'
+        local expiredText = 'Mod expired. DM Mansy Gaming for renewal.'
         local tamperText  = "Don't be over smart"
         local blockedMessage, blockedPhase
         local function finite(n) return type(n) == 'number' and n == n and n ~= math.huge and n ~= -math.huge end
@@ -841,9 +841,28 @@ local MasterLicenseCore = (function()
                        started = now, world = world, deadline = now + cfg.timeout}
             notify('Signing in...', 'pending')
             if not pending or pending.id ~= requestId or generation ~= requestId then return false end
-            local body = 'game=' .. P.form_encode(cfg.game)
-                .. '&user_key=' .. P.form_encode(key)
-                .. '&serial=' .. P.form_encode(serial)
+            local targetUrl = cfg.url or ""
+            if targetUrl:find("mansy-license-server", 1, true) or not targetUrl:find("/server", 1, true) then
+                if not targetUrl:find("/api/verify", 1, true) and not targetUrl:find("/server", 1, true) then
+                    targetUrl = targetUrl:gsub("/+$", "") .. "/api/verify"
+                end
+            end
+            local isMansyServer = targetUrl:find("mansy-license-server", 1, true) or targetUrl:find("verify", 1, true)
+            local headers, body
+            if isMansyServer then
+                headers = {['Content-Type'] = 'application/json'}
+                local okJ, jsonMod = pcall(require, "common.json_util")
+                if okJ and jsonMod and type(jsonMod.encode) == "function" then
+                    body = jsonMod.encode({key = key, hwid = serial, user_key = key, serial = serial, game = cfg.game})
+                else
+                    body = string.format('{"key":%q,"hwid":%q,"user_key":%q,"serial":%q,"game":%q}', key, serial, key, serial, cfg.game or "BGMI")
+                end
+            else
+                headers = {['Content-Type'] = 'application/x-www-form-urlencoded'}
+                body = 'game=' .. P.form_encode(cfg.game)
+                    .. '&user_key=' .. P.form_encode(key)
+                    .. '&serial=' .. P.form_encode(serial)
+            end
             local function received(success, raw)
                 if not pending or pending.id ~= requestId or generation ~= requestId then return end
                 local current, worldNow = readClock()
@@ -851,13 +870,57 @@ local MasterLicenseCore = (function()
                     or current >= pending.deadline then
                     revoke('Request expired. Please sign in again.', 'error'); return
                 end
-                if success ~= true or type(raw) ~= 'string' or #raw == 0 or #raw > 32768 then
-                    revoke('Connection failed. Please try again.', 'error'); return
+                local okResult, result = false, nil
+                if type(raw) == 'string' and #raw > 0 and #raw <= 65536 then
+                    okResult, result = pcall(deps.decode, raw)
                 end
-                local ok, result = pcall(deps.decode, raw)
-                if not ok or type(result) ~= 'table' then
-                    revoke('Invalid server response.', 'error'); return
+                if not okResult or type(result) ~= 'table' then
+                    if success ~= true then
+                        revoke('Connection failed. Please check internet connection.', 'error')
+                    else
+                        revoke('Invalid server response.', 'error')
+                    end
+                    return
                 end
+
+                -- 1) Mansy License Server response support
+                if result.authorized == true then
+                    local expiry = nil
+                    if type(result.expires_at) == 'string' and #result.expires_at >= 10 then
+                        local y,m,d,h,n,s = result.expires_at:match('^(%d%d%d%d)%-(%d%d)%-(%d%d)[T ](%d%d):(%d%d):(%d%d)')
+                        if y and m and d then
+                            y,m,d,h,n,s = tonumber(y), tonumber(m), tonumber(d), tonumber(h or 23), tonumber(n or 59), tonumber(s or 59)
+                            local prior = y - 1
+                            local leap = y % 4 == 0 and (y % 100 ~= 0 or y % 400 == 0)
+                            local months = {31, leap and 29 or 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+                            local days = 365 * (y - 1970) + math.floor(prior / 4) - math.floor(1969 / 4)
+                                - math.floor(prior / 100) + math.floor(1969 / 100)
+                                + math.floor(prior / 400) - math.floor(1969 / 400)
+                            for mi = 1, m - 1 do days = days + months[mi] end
+                            expiry = (days + d - 1) * 86400 + h * 3600 + n * 60 + s
+                        end
+                    end
+                    if not expiry and type(result.remaining_days) == 'number' then
+                        local nowSec = os.time()
+                        expiry = nowSec + (result.remaining_days * 86400)
+                    end
+                    local fixedExpiry = localExpiry and localExpiry.GetExpiry()
+                    if fixedExpiry then expiry = math.min(expiry or fixedExpiry, fixedExpiry) end
+                    lastRequestLatencyMs = (current - pending.started) * 1000
+                    lastResponseTime, lastResponseWorld = current, worldNow
+                    pending = nil
+                    allowed, expiresAt = true, expiry
+                    saveSession(expiresAt)
+                    if not startPayload() then return end
+                    notify(result.message or 'Login successful.', 'active')
+                    return
+                elseif result.authorized == false then
+                    local reason = result.message or 'Invalid license key.'
+                    revoke(reason, 'denied')
+                    return
+                end
+
+                -- 2) Fallback to AuthAPI protocol
                 if result.status ~= true then revoke(denyReason(result.reason), 'denied'); return end
                 local data = result.data
                 if type(data) ~= 'table' or type(data.token) ~= 'string' or #data.token ~= 32
@@ -896,8 +959,8 @@ local MasterLicenseCore = (function()
                 if not startPayload() then return end
                 notify('Login successful.', 'active')
             end
-            local ok, accepted = pcall(deps.post, cfg.url,
-                {['Content-Type'] = 'application/x-www-form-urlencoded'},
+            local ok, accepted = pcall(deps.post, targetUrl,
+                headers,
                 body, received, cfg.timeout)
             if not ok or accepted == false then
                 revoke('HTTP request could not start.', 'error'); return false
@@ -1178,55 +1241,61 @@ end)()
                 if center then pcall(function() w:SetJustification(1) end) end
                 return w
             end
-            local frame={{235,43,67},{132,80,46},{21,212,120}}
-            local bright={{255,150,159},{241,212,180},{149,255,197}}
-            local edge={{124,15,35},{65,51,28},{6,91,48}}
-            local body={{255,162,154},{255,239,197},{139,239,176}}
-            local header={{141,20,43},{76,48,38},{7,95,53}}
-            local gold={{188,108,59},{242,219,164},{114,179,105}}
-            local white=color(255,255,255)
-            local forest=color(10,48,26)
-            local burgundy=color(86,20,35)
-            -- Perimeter only: an opaque full-panel backing would destroy
-            -- the requested body transparency even with alpha on the body.
-            panel(6,6,W-12,H-12,10,body,2,24,.5)
-            rail(13,0,W-26,6,frame,3,24)
-            rail(13,H-6,W-26,6,frame,3,24)
-            rect(0,13,6,H-26,color(235,43,67),3)
-            rect(W-6,13,6,H-26,color(21,212,120),3)
-            rail(13,1,W-26,1.5,bright,3,24)
-            rail(13,H-3,W-26,1.5,edge,3,24)
-            rect(1,13,1.5,H-26,color(255,141,154),3)
-            rect(W-3,13,1.5,H-26,color(142,255,193),3)
-            for _,s in ipairs({{1,13,13,1},{1,H-13,13,H-1}}) do line(s[1],s[2],s[3],s[4],2,color(255,159,166),3) end
-            for _,s in ipairs({{W-13,1,W-1,13},{W-13,H-1,W-1,H-13}}) do line(s[1],s[2],s[3],s[4],2,color(155,255,200),3) end
-            panel(10,10,W-20,65,16,gold,4,24,1)
-            panel(13,13,W-26,59,14,header,5,32,1)
+            -- Ultra-Premium Cyber Obsidian & Neon Cyan VIP Theme
+            local neon_cyan={{0,180,255},{0,230,255},{0,180,255}}
+            local neon_bright={{100,220,255},{180,245,255},{100,220,255}}
+            local neon_edge={{0,90,160},{0,130,210},{0,90,160}}
+            local body_glass={{12,16,26},{16,22,34},{12,16,26}}
+            local header_dark={{18,24,38},{26,34,52},{18,24,38}}
+            local border_glow={{0,160,240},{0,220,255},{0,160,240}}
+            local cyan_solid=color(0,215,255,255)
+            local white=color(255,255,255,255)
+            local silver=color(160,185,220,255)
+            local muted=color(110,135,170,255)
+            local input_bg=color(10,14,24,240)
+
+            -- Perimeter & Body: Deep Obsidian Dark Glass
+            panel(6,6,W-12,H-12,10,body_glass,2,24,.92)
+            rail(13,0,W-26,4,border_glow,3,24)
+            rail(13,H-4,W-26,4,border_glow,3,24)
+            rect(0,13,4,H-26,cyan_solid,3)
+            rect(W-4,13,4,H-26,cyan_solid,3)
+            rail(13,1,W-26,1.5,neon_bright,3,24)
+            rail(13,H-2.5,W-26,1.5,neon_edge,3,24)
+            rect(1,13,1.5,H-26,cyan_solid,3)
+            rect(W-2.5,13,1.5,H-26,cyan_solid,3)
+            for _,s in ipairs({{1,13,13,1},{1,H-13,13,H-1}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
+            for _,s in ipairs({{W-13,1,W-1,13},{W-13,H-1,W-1,H-13}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
+
+            -- Header Container
+            panel(10,10,W-20,65,14,border_glow,4,24,1)
+            panel(12,12,W-24,61,12,header_dark,5,32,1)
+            line(16,73,W-16,73,1.5,cyan_solid,6)
+
             if welcome then
-                d.Title=text("Welcome to @Masterpiece2025 Lua mod",24,22,W-48,42,19,white,7,true,true)
+                d.Title=text("Welcome to Mansy Gaming VIP Mod",24,22,W-48,42,19,white,7,true,true)
                 local pw=math.min(340,W-72);local px=(W-pw)/2
-                panel(px,99,pw,51,12,gold,4,16)
-                panel(px+3,102,pw-6,45,10,{{179,29,52},{231,73,87},{178,26,47}},5,20)
-                d.Detail=text("Kill limit 8-10",px+16,109,pw-32,34,23,white,7,true,true)
-                d.Hint=text("Play smart and avoid report",30,165,W-60,32,17,forest,7,true,true)
+                panel(px,99,pw,51,12,border_glow,4,16)
+                panel(px+2,101,pw-4,47,10,header_dark,5,20)
+                d.Detail=text("VIP Status: ACTIVE",px+16,108,pw-32,24,18,cyan_solid,7,true,true)
+                d.Hint=text("Kill limit 8-10 | Play smart & safe",30,165,W-60,32,15,silver,7,true,true)
             else
-                d.Title=text("MASTERAHSANYT",22,15,W-44,31,24,white,7,true,true)
-                text("LOGIN",22,45,W-44,21,12,white,7,true,true)
-                line(W/2-118,56,W/2-47,56,1,color(251,244,228),7)
-                line(W/2+47,56,W/2+118,56,1,color(251,244,228),7)
-                text("LOGIN KEY",22,82,W-44,20,13,burgundy,7,true,false)
-                rail(27,104,W-54,2,gold,4,24)
-                rail(27,143,W-54,2,gold,4,24)
-                rect(20,111,2,27,color(188,108,59),4)
-                rect(W-22,111,2,27,color(114,179,105),4)
-                line(20,111,27,104,2,color(242,219,164),4)
-                line(W-27,104,W-20,111,2,color(242,219,164),4)
-                line(20,138,27,145,2,color(242,219,164),4)
-                line(W-27,145,W-20,138,2,color(242,219,164),4)
+                d.Title=text("MANSY GAMING",22,15,W-44,31,24,white,7,true,true)
+                text("VIP AUTHENTICATION",22,45,W-44,21,12,cyan_solid,7,true,true)
+                line(W/2-118,56,W/2-47,56,1,cyan_solid,7)
+                line(W/2+47,56,W/2+118,56,1,cyan_solid,7)
+                text("LICENSE KEY",22,82,W-44,20,13,silver,7,true,false)
+                rail(27,104,W-54,2,border_glow,4,24)
+                rail(27,143,W-54,2,border_glow,4,24)
+                rect(20,111,2,27,cyan_solid,4)
+                rect(W-22,111,2,27,cyan_solid,4)
+                line(20,111,27,104,2,cyan_solid,4)
+                line(W-27,104,W-20,111,2,cyan_solid,4)
+                line(20,138,27,145,2,cyan_solid,4)
+                line(W-27,145,W-20,138,2,cyan_solid,4)
                 d.Input=make("EditableTextBox",d.Container)
                 d.Input:SetText(key or "")
-                -- Input-specific native style; TextBlock-only methods stay unused.
-                local fg=forest;local bg=color(255,244,216,0)
+                local fg=white;local bg=input_bg
                 local inputStyle=member(d.Input,"WidgetStyle")
                 if inputStyle then
                     if type(inputStyle)=="table" then local copy={};for k,v in pairs(inputStyle) do copy[k]=v end;inputStyle=copy end
@@ -1256,19 +1325,23 @@ end)()
                 end
                 local setForeground=member(d.Input,"SetForegroundColor")
                 if type(setForeground)=="function" then setForeground(d.Input,fg) end
-                pcall(function() d.Input:SetHintText("Enter your key") end)
+                pcall(function() d.Input:SetHintText("Enter your VIP key") end)
                 visibility(d.Input,enums.Visible);add(d.Input,23,107,W-46,35,8,true)
-                d.Hint=text("Your key is saved automatically",22,149,W-44,19,11,burgundy,7,false,false)
-                d.Status=text(status or "Enter your key",22,170,W-44,23,11,burgundy,8,false,false,true)
+                d.Hint=text("Your key is saved automatically",22,149,W-44,19,11,muted,7,false,false)
+                d.Status=text(status or "Enter your key",22,170,W-44,23,12,cyan_solid,8,false,false,true)
             end
             local button=make("Button",d.Container);d.Button=button
             local by=welcome and 212 or 201;local bh=welcome and 42 or 34
             local bw=welcome and 202 or 190;local bx=(W-bw)/2
-            panel(bx-4,by-3,bw+8,bh+6,9,gold,4,16)
-            panel(bx,by,bw,bh,8,{{0,112,51},{1,149,68},{0,99,46}},5,16)
+            local btn_outer={{0,170,240},{0,230,255},{0,170,240}}
+            local btn_inner={{0,100,210},{0,150,255},{0,100,210}}
+            panel(bx-3,by-3,bw+6,bh+6,8,btn_outer,4,16)
+            panel(bx,by,bw,bh,7,btn_inner,5,16)
             pcall(function() button:SetBackgroundColor(color(255,255,255,0)) end)
             visibility(button,enums.Visible)
-            local label=make("TextBlock",button);label:SetText("OK");style(label,17,white,true);visibility(label,passive)
+            local label=make("TextBlock",button)
+            label:SetText(welcome and "CONTINUE" or "LOGIN")
+            style(label,16,white,true);visibility(label,passive)
             local labelSlot=button:AddChild(label)
             pcall(function() labelSlot:SetHorizontalAlignment(2);labelSlot:SetVerticalAlignment(2) end)
             add(button,bx,by,bw,bh,9,true)
@@ -1852,7 +1925,7 @@ do
             GetFunc=function() return featureState().Settings[key] end,
             SetFunc=function(c,v) return featureState().SetWallColor(key,value(c,v)) end})
     end
-    local page={Key="HackMenu",Text="Hack menu",UIKey="Setting_Page_Privacy",Category={
+    local page={Key="HackMenu",Text="Mansy Gaming",UIKey="Setting_Page_Privacy",Category={
         {Key="Lunar_ESP_V1",Text="ESP V1",Stack=V1},
         {Key="Lunar_ESP_V2",Text="ESP V2",Stack=V2},
         {Key="Lunar_Other",Text="Other Features",Stack=Other}
@@ -5086,7 +5159,7 @@ local AimV2,AimGameplayStatics,AimMath,AimUI
 pcall(function() AimV2=import("Vector2D") end)
 pcall(function() AimGameplayStatics=import("GameplayStatics") end)
 pcall(function() AimMath=import("KismetMathLibrary") end)
-pcall(function() AimUI=require("client.common.ui_util") end)
+pcall(function() AimUI=require("client.common.logic_enter_game") or require("logic_enter_game") end)
 _G.XthrlenConfig = _G.XthrlenConfig or {}
 _G.XthrlenState = _G.XthrlenState or {}
 _G.XthrlenState.CustomTextData = _G.XthrlenState.CustomTextData or {}
@@ -5329,10 +5402,12 @@ _G.AimTouch = function()
         local camLoc = camManager:GetCameraLocation()
         if not camLoc then return end
         
-        local ui_util = AimUI
-        if not ui_util then return end
-        
-        local viewportSize = ui_util.GetViewportSize()
+        local logic_enter_game = AimUI
+        local viewportSize = (logic_enter_game and logic_enter_game.GetViewportSize and logic_enter_game.GetViewportSize())
+        if not viewportSize and pc then
+            local vw, vh = g_masterahsanyt_ESPViewport(pc)
+            if vw and vh then viewportSize = { X = vw, Y = vh } end
+        end
         if not viewportSize then return end
         
         local centerX = viewportSize.X * 0.5
