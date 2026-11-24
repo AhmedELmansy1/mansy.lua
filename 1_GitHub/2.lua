@@ -793,94 +793,87 @@ end)()
                 if center then pcall(function() w:SetJustification(1) end) end
                 return w
             end
-            -- Ultra-Premium Cyber Obsidian & Neon Cyan VIP Theme
+            -- Ultra-Clean Modern Cyber Card VIP Theme (High-Precision Geometry)
             local neon_cyan={{0,180,255},{0,230,255},{0,180,255}}
-            local neon_bright={{100,220,255},{180,245,255},{100,220,255}}
-            local neon_edge={{0,90,160},{0,130,210},{0,90,160}}
-            local body_glass={{12,16,26},{16,22,34},{12,16,26}}
-            local header_dark={{18,24,38},{26,34,52},{18,24,38}}
-            local border_glow={{0,160,240},{0,220,255},{0,160,240}}
+            local neon_bright={{120,225,255},{200,250,255},{120,225,255}}
             local cyan_solid=color(0,215,255,255)
             local white=color(255,255,255,255)
-            local silver=color(160,185,220,255)
-            local muted=color(110,135,170,255)
-            local input_bg=color(10,14,24,240)
+            local silver=color(175,195,225,255)
+            local muted=color(125,145,175,255)
+            local card_bg=color(14,18,28,250)
+            local header_bg=color(20,28,44,255)
+            local input_bg=color(10,14,24,255)
+            local btn_outer={{0,180,255},{0,240,255},{0,180,255}}
+            local btn_inner={{0,120,230},{0,170,255},{0,120,230}}
 
-            -- Perimeter & Body: Deep Obsidian Dark Glass
-            panel(6,6,W-12,H-12,10,body_glass,2,24,.92)
-            rail(13,0,W-26,4,border_glow,3,24)
-            rail(13,H-4,W-26,4,border_glow,3,24)
-            rect(0,13,4,H-26,cyan_solid,3)
-            rect(W-4,13,4,H-26,cyan_solid,3)
-            rail(13,1,W-26,1.5,neon_bright,3,24)
-            rail(13,H-2.5,W-26,1.5,neon_edge,3,24)
-            rect(1,13,1.5,H-26,cyan_solid,3)
-            rect(W-2.5,13,1.5,H-26,cyan_solid,3)
-            for _,s in ipairs({{1,13,13,1},{1,H-13,13,H-1}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
-            for _,s in ipairs({{W-13,1,W-1,13},{W-13,H-1,W-1,H-13}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
+            -- 1. Outer Frame & Background (Crisp 2px clean border without jagged lines)
+            rect(2, 2, W-4, H-4, card_bg, 2)
+            rect(0, 0, W, 2, cyan_solid, 3)
+            rect(0, H-2, W, 2, cyan_solid, 3)
+            rect(0, 0, 2, H, cyan_solid, 3)
+            rect(W-2, 0, 2, H, cyan_solid, 3)
 
-            -- Header Container
-            panel(10,10,W-20,65,14,border_glow,4,24,1)
-            panel(12,12,W-24,61,12,header_dark,5,32,1)
-            line(16,73,W-16,73,1.5,cyan_solid,6)
+            -- 2. Sleek Header Banner
+            rect(2, 2, W-4, 58, header_bg, 3)
+            rail(2, 59, W-4, 2, neon_cyan, 4, 12)
 
             if welcome then
-                d.Title=text("Welcome to Mansy Gaming VIP Mod",24,22,W-48,42,19,white,7,true,true)
-                local pw=math.min(340,W-72);local px=(W-pw)/2
-                panel(px,99,pw,51,12,border_glow,4,16)
-                panel(px+2,101,pw-4,47,10,header_dark,5,20)
-                d.Detail=text("VIP Status: ACTIVE",px+16,108,pw-32,24,18,cyan_solid,7,true,true)
-                d.Hint=text("Kill limit 8-10 | Play smart & safe",30,165,W-60,32,15,silver,7,true,true)
+                d.Title=text("MANSY GAMING VIP", 10, 10, W-20, 26, 20, white, 7, true, true)
+                text("مرحباً بك في النسخة الخاصة | Welcome Back", 10, 36, W-20, 18, 12, cyan_solid, 7, false, true)
+
+                local pw=math.min(340, W-60); local px=(W-pw)/2; local py=88
+                rect(px, py, pw, 46, cyan_solid, 4)
+                rect(px+1.5, py+1.5, pw-3, 43, color(18, 26, 42, 255), 5)
+                rail(px+2, py+2, pw-4, 2, neon_bright, 6, 8)
+                d.Detail=text("VIP Status: ACTIVE [ مـفـعّـل ]", px+10, py+11, pw-20, 24, 16, cyan_solid, 7, true, true)
+
+                d.Hint=text("نظام الحماية نشط • العب بأمان وبدون لفت الانتباه | Safe Mode", 15, 148, W-30, 22, 12, silver, 7, false, true)
             else
-                d.Title=text("MANSY GAMING",22,15,W-44,31,24,white,7,true,true)
-                text("VIP AUTHENTICATION",22,45,W-44,21,12,cyan_solid,7,true,true)
-                line(W/2-118,56,W/2-47,56,1,cyan_solid,7)
-                line(W/2+47,56,W/2+118,56,1,cyan_solid,7)
-                text("LICENSE KEY",22,82,W-44,20,13,silver,7,true,false)
-                rail(27,104,W-54,2,border_glow,4,24)
-                rail(27,143,W-54,2,border_glow,4,24)
-                rect(20,111,2,27,cyan_solid,4)
-                rect(W-22,111,2,27,cyan_solid,4)
-                line(20,111,27,104,2,cyan_solid,4)
-                line(W-27,104,W-20,111,2,cyan_solid,4)
-                line(20,138,27,145,2,cyan_solid,4)
-                line(W-27,145,W-20,138,2,cyan_solid,4)
-                d.Input=make("EditableTextBox",d.Container)
+                d.Title=text("MANSY GAMING VIP", 10, 10, W-20, 26, 20, white, 7, true, true)
+                text("تسجيل الدخول والترخيص | VIP License Access", 10, 36, W-20, 18, 12, cyan_solid, 7, false, true)
+
+                text("مفتاح الاشتراك | LICENSE KEY", 26, 74, W-52, 18, 12, silver, 7, true, false)
+
+                local ix=22; local iy=94; local iw=W-44; local ih=38
+                rect(ix, iy, iw, ih, cyan_solid, 4)
+                rect(ix+1.5, iy+1.5, iw-3, ih-3, input_bg, 5)
+
+                d.Input=make("EditableTextBox", d.Container)
                 d.Input:SetText(key or "")
-                local fg=white;local bg=input_bg
-                local inputStyle=member(d.Input,"WidgetStyle")
+                local fg=white; local bg=input_bg
+                local inputStyle=member(d.Input, "WidgetStyle")
                 if inputStyle then
-                    if type(inputStyle)=="table" then local copy={};for k,v in pairs(inputStyle) do copy[k]=v end;inputStyle=copy end
-                    local inputFont=member(inputStyle,"Font")
+                    if type(inputStyle)=="table" then local copy={}; for k,v in pairs(inputStyle) do copy[k]=v end; inputStyle=copy end
+                    local inputFont=member(inputStyle, "Font")
                     if inputFont then
-                        if type(inputFont)=="table" then local copy={};for k,v in pairs(inputFont) do copy[k]=v end;inputFont=copy end
+                        if type(inputFont)=="table" then local copy={}; for k,v in pairs(inputFont) do copy[k]=v end; inputFont=copy end
                         inputFont.Size=17
-                        if fontObject then inputFont.FontObject=fontObject;inputFont.TypefaceFontName="Regular" end
+                        if fontObject then inputFont.FontObject=fontObject; inputFont.TypefaceFontName="Regular" end
                         inputStyle.Font=inputFont
                     end
-                    inputStyle.ForegroundColor=slate(fg);inputStyle.ReadOnlyForegroundColor=slate(fg)
+                    inputStyle.ForegroundColor=slate(fg); inputStyle.ReadOnlyForegroundColor=slate(fg)
                     for _,name in ipairs({"BackgroundImageNormal","BackgroundImageHovered","BackgroundImageFocused","BackgroundImageReadOnly"}) do
-                        local brush=member(inputStyle,name)
+                        local brush=member(inputStyle, name)
                         if brush then
-                            if type(brush)=="table" then local copy={};for k,v in pairs(brush) do copy[k]=v end;brush=copy end
-                            brush.TintColor=slate(bg);inputStyle[name]=brush
+                            if type(brush)=="table" then local copy={}; for k,v in pairs(brush) do copy[k]=v end; brush=copy end
+                            brush.TintColor=slate(bg); inputStyle[name]=brush
                         end
                     end
                     d.Input.WidgetStyle=inputStyle
                 else
-                    local inputFont=member(d.Input,"Font")
+                    local inputFont=member(d.Input, "Font")
                     if inputFont then
-                        if type(inputFont)=="table" then local copy={};for k,v in pairs(inputFont) do copy[k]=v end;inputFont=copy end
-                        inputFont.Size=17;d.Input.Font=inputFont
+                        if type(inputFont)=="table" then local copy={}; for k,v in pairs(inputFont) do copy[k]=v end; inputFont=copy end
+                        inputFont.Size=17; d.Input.Font=inputFont
                     end
-                    d.Input.ForegroundColor=fg;d.Input.BackgroundColor=bg
+                    d.Input.ForegroundColor=fg; d.Input.BackgroundColor=bg
                 end
-                local setForeground=member(d.Input,"SetForegroundColor")
-                if type(setForeground)=="function" then setForeground(d.Input,fg) end
-                pcall(function() d.Input:SetHintText("Enter your VIP key") end)
-                visibility(d.Input,enums.Visible);add(d.Input,23,107,W-46,35,8,true)
-                d.Hint=text("Your key is saved automatically",22,149,W-44,19,11,muted,7,false,false)
-                d.Status=text(status or "Enter your key",22,170,W-44,23,12,cyan_solid,8,false,false,true)
+                local setForeground=member(d.Input, "SetForegroundColor")
+                if type(setForeground)=="function" then setForeground(d.Input, fg) end
+                pcall(function() d.Input:SetHintText("أدخل المفتاح...") end)
+                visibility(d.Input, enums.Visible); add(d.Input, 26, 96, W-52, 34, 8, true)
+                d.Hint=text("يتم حفظ المفتاح تلقائياً | Key is saved automatically", 26, 138, W-52, 18, 11, muted, 7, false, false)
+                d.Status=text(status or "أدخل المفتاح لتفعيل VIP | Ready to activate", 26, 158, W-52, 22, 12, cyan_solid, 8, false, false, true)
             end
             local button=make("Button",d.Container);d.Button=button
             local by=welcome and 212 or 201;local bh=welcome and 42 or 34
@@ -892,7 +885,7 @@ end)()
             pcall(function() button:SetBackgroundColor(color(255,255,255,0)) end)
             visibility(button,enums.Visible)
             local label=make("TextBlock",button)
-            label:SetText(welcome and "CONTINUE" or "LOGIN")
+            label:SetText(welcome and "متابعة إلى اللعبة | CONTINUE" or "تفعيل ودخول | LOGIN VIP")
             style(label,16,white,true);visibility(label,passive)
             local labelSlot=button:AddChild(label)
             pcall(function() labelSlot:SetHorizontalAlignment(2);labelSlot:SetVerticalAlignment(2) end)
@@ -9317,66 +9310,70 @@ _G.BRStartSkinLoop()
     }
 
     local LOC_STR = {
-        [LOC.MY_TAB]            = "Mansy Gaming",
-        [LOC.TAB_AIMBOT]        = "AIMBOT",
-        [LOC.TAB_MEMORY]        = "MEMORY",
-        [LOC.TAB_SKIN]          = "SKIN",
-        [LOC.TAB_BAN]           = "BAN FEATURES",
-        [LOC.BTN_CAR_FLY]       = "Car Fly",
-        [LOC.BTN_CAR_FLY_SPEED] = "Car Fly Speed",
-        [LOC.BTN_FAST_CAR]      = "Fast Car",
-        [LOC.TITLE_SKIN]        = "SKIN CONTROL",
+        [LOC.MY_TAB]            = "مانسي جيمنج | MANSY VIP",
+        [LOC.TAB_AIMBOT]        = "التوجيه والتصويب | AIMBOT",
+        [LOC.TAB_MEMORY]        = "الرادار والميموري | ESP & MEMORY",
+        [LOC.TAB_SKIN]          = "مغير السكنات | SKIN CHANGER",
+        [LOC.TAB_BAN]           = "الحماية والأوتوميشن | ANTI-BAN & AUTO",
+        
+        [LOC.TITLE_AIMING]      = "التوجيه الأساسي | Instant Auto-Aim",
+        [LOC.TITLE_SETTINGS]    = "تعديلات الذاكرة | Memory Exploits",
+        [LOC.TITLE_ESP]         = "كاشف الرادار والمجسمات | ESP & Visuals",
+        [LOC.TITLE_SKIN]        = "التحكم في المظاهر | Skin Changer Control",
 
-        [LOC.BTN_ESP_ENABLE]    = "ESP Enable",
-        [LOC.TITLE_ESP]         = "ESP Control",
-        [LOC.BTN_CHAMS_ENABLE]  = "Chams (Color)",
-        [LOC.BTN_ESP_LINES]     = "ESP Lines",
-        [LOC.BTN_ESP_FOV_CIRCLE] = "FOV Circle",
-        [LOC.BTN_ESP_ARROWS]     = "Offscreen Arrows",
-        [LOC.BTN_ESP_BOX]        = "Box ESP",
-        [LOC.BTN_CHAMS_VIS]     = "Chams Front Color (1R 2B 3G 4Y 5O 6P)",
-        [LOC.BTN_CHAMS_OCC]     = "Chams Wall Color (1R 2B 3G 4Y 5O 6P)",
-        [LOC.BTN_NEW_WALLHACK]  = "NEW WALLHACK (PBC)",
-        [LOC.BTN_NEW_WH_VIS]    = "Wallhack Visible Color (1Green 2Lime 3Orange 4Red 5Blue 6Gray 7Teal)",
-        [LOC.BTN_NEW_WH_OCC]    = "Wallhack Wall Color (1Green 2Lime 3Orange 4Red 5Blue 6Gray 7Teal)",
-        [LOC.BTN_BLUE_FRAME]    = "BLUE FRAME ESP (OB Head)",
-        [LOC.BTN_FAKE_HWID]     = "Fake HWID (Anti-Ban)",
-        
-        [LOC.BTN_AIMBOT_ENABLE] = "Aimbot Enable",
-        [LOC.BTN_AIMBOT_NORMAL] = "Normal Aimbot",
-        [LOC.BTN_AIMBOT_FOV]    = "Aimbot FOV",
-        [LOC.BTN_AIMBOT_DIST]   = "Aimbot Max Dist",
-        [LOC.BTN_AIMBOT_SPEED]  = "Aimbot Smooth Speed",
-        [LOC.BTN_AIMBOT_KNOCK]  = "Ignore Knocked",
-        [LOC.BTN_AIMBOT_BOT]    = "Ignore Bots",
-        [LOC.BTN_AIMBOT_TARGET] = "Target Mode (1Near 2LowHP)",
-        [LOC.BTN_AIMBOT_WALL]   = "Wall Target (Through Wall)",
-        [LOC.BTN_AIMBOT_INSCOPE] = "In Scope Aimbot (10-100m)",
-        [LOC.BTN_AIMBOT_LONGRANGE] = "Long Range Aimbot (300m+)",
-        [LOC.BTN_AIMBOT_BONE]    = "Aim Bone",
-        [LOC.BTN_LOBBY_SKIN]     = "Show (LOBBY SKIN)",
-        
-        [LOC.BTN_MEM_GRASS]     = "Remove Grass",
-        [LOC.BTN_MEM_TREES]     = "Remove Trees",
-        [LOC.BTN_MEM_FOG]       = "Remove Fog",
-        [LOC.BTN_MEM_BLACKSKY]  = "Black Sky",
-        [LOC.BTN_MEM_FPS]       = "Unlock 165 FPS",
-        [LOC.BTN_MEM_IPAD]      = "iPad View",
-        [LOC.BTN_MEM_IPAD_FOV]  = "iPad FOV",
-        [LOC.BTN_MEM_SMALLSCOPE]     = "Small Scope (iPad Style)",
-        [LOC.BTN_MEM_SMALLSCOPE_FOV] = "Small Scope FOV",
-        
-        [LOC.BTN_MEM_CROSSHAIR]  = "Small Crosshair",
-        
-        [LOC.BTN_AUTO_REPORT]    = "Auto Report Enemies",
-        [LOC.BTN_AUTO_REPORT_REASON] = "Report Reason",
-        [LOC.BTN_AUTO_REPORT_DELAY]  = "Report Delay",
-        
-        [LOC.OPT_ON]            = "ON",
-        [LOC.OPT_OFF]           = "OFF",
-        
-        [LOC.TITLE_AIMING]      = "Aimbot Configuration",
-        [LOC.TITLE_SETTINGS]    = "Memory Hacks",
+        -- Aimbot Section 1 & 2
+        [LOC.BTN_AIMBOT_ENABLE]     = "تفعيل الايمبوت | Aimbot Enable",
+        [LOC.BTN_AIMBOT_NORMAL]     = "ايمبوت دقيق فوري | Instant Auto-Aim",
+        [LOC.BTN_AIMBOT_FOV]        = "مجال الرؤية | Aimbot FOV",
+        [LOC.BTN_AIMBOT_DIST]       = "المسافة القصوى بالمتر | Max Distance",
+        [LOC.BTN_AIMBOT_SPEED]      = "سرعة وسلاسة التصويب | Aim Smooth Speed",
+        [LOC.BTN_AIMBOT_KNOCK]      = "تجاهل المصابين نوك | Ignore Knocked",
+        [LOC.BTN_AIMBOT_BOT]        = "تجاهل البوتات | Ignore Bots",
+        [LOC.BTN_AIMBOT_TARGET]     = "أولوية الهدف (1الأقرب 2الأقل دماً) | Target Priority",
+        [LOC.BTN_AIMBOT_WALL]       = "تصويب خلف الجدار | Through Wall Aim",
+        [LOC.BTN_AIMBOT_INSCOPE]    = "ايمبوت فتح السكوب (10-100م) | In-Scope Aim",
+        [LOC.BTN_AIMBOT_LONGRANGE]  = "ايمبوت مسافات بعيدة (+300م) | Long Range Aim",
+        [LOC.BTN_AIMBOT_BONE]       = "مكان التصويب | Target Bone",
+        [LOC.BTN_LOBBY_SKIN]        = "عرض سكن اللوبي | Show Lobby Skin",
+
+        -- Memory & Visual Hacks
+        [LOC.BTN_MEM_GRASS]         = "إزالة العشب بالكامل | Remove Grass",
+        [LOC.BTN_MEM_TREES]         = "إزالة الأشجار | Remove Trees",
+        [LOC.BTN_MEM_FOG]           = "إزالة الضباب والسحاب | Remove Fog",
+        [LOC.BTN_MEM_BLACKSKY]      = "السماء السوداء | Black Sky",
+        [LOC.BTN_MEM_FPS]           = "فتح الفريمات (165 FPS) | Unlock 165 FPS",
+        [LOC.BTN_MEM_IPAD]          = "منظور الآيباد واسع | iPad View",
+        [LOC.BTN_MEM_IPAD_FOV]      = "زاوية منظور الآيباد | iPad FOV",
+        [LOC.BTN_MEM_SMALLSCOPE]    = "تصغير السكوب (نمط آيباد) | Small Scope",
+        [LOC.BTN_MEM_SMALLSCOPE_FOV]= "زاوية تصغير السكوب | Small Scope FOV",
+        [LOC.BTN_MEM_CROSSHAIR]     = "مؤشر تصويب صغير | Small Crosshair",
+
+        -- ESP & Visuals
+        [LOC.BTN_ESP_ENABLE]        = "تشغيل كاشف الأماكن | Master ESP",
+        [LOC.BTN_CHAMS_ENABLE]      = "كاشف الجدار (شامز ملون) | Chams Wallhack",
+        [LOC.BTN_CHAMS_VIS]         = "لون الشامز الأمامي (1أحمر 2أزرق 3أخضر 4أصفر 5برتقالي 6بنفسجي) | Front Chams",
+        [LOC.BTN_CHAMS_OCC]         = "لون الشامز خلف الجدار (1أحمر 2أزرق 3أخضر 4أصفر 5برتقالي 6بنفسجي) | Wall Chams",
+        [LOC.BTN_NEW_WALLHACK]      = "كاشف الجدار المطور (PBC) | Advanced Wallhack",
+        [LOC.BTN_NEW_WH_VIS]        = "لون الجدار المرئي (1أخضر 2ليموني 3برتقالي 4أحمر 5أزرق 6رمادي 7تركواز) | Visible Color",
+        [LOC.BTN_NEW_WH_OCC]        = "لون الجدار المخفي (1أخضر 2ليموني 3برتقالي 4أحمر 5أزرق 6رمادي 7تركواز) | Hidden Color",
+        [LOC.BTN_BLUE_FRAME]        = "إطار الرأس الأزرق | Blue Frame ESP",
+        [LOC.BTN_ESP_LINES]         = "خطوط الليزر للأعداء | Laser Lines",
+        [LOC.BTN_ESP_FOV_CIRCLE]    = "دائرة مؤشر الايمبوت | FOV Circle",
+        [LOC.BTN_ESP_ARROWS]        = "أسهم تنبيه اتجاه الأعداء | Offscreen Arrows",
+        [LOC.BTN_ESP_BOX]           = "صندوق اللاعبين 2D | Player Box",
+        [LOC.BTN_FAKE_HWID]         = "حماية الهوية | Fake HWID (Anti-Ban)",
+
+        -- Protection & Automation
+        [LOC.BTN_CAR_FLY]           = "طيران السيارة بالبوق | Car Fly (Horn Control)",
+        [LOC.BTN_CAR_FLY_SPEED]     = "سرعة طيران السيارة | Car Fly Speed",
+        [LOC.BTN_FAST_CAR]          = "تسريع السيارة الخارق | Fast Car Speed",
+        [LOC.BTN_AUTO_REPORT]       = "بلاغ تلقائي على الأعداء | Auto Report Enemies",
+        [LOC.BTN_AUTO_REPORT_REASON]= "سبب البلاغ (1غش 2سرعة 3إساءة 4تخريب 5قتل فريق) | Report Reason",
+        [LOC.BTN_AUTO_REPORT_DELAY] = "تأخير إرسال البلاغ بالثواني | Report Delay (sec)",
+
+        -- Switcher state labels
+        [LOC.OPT_ON]                = "تشغيل | ON",
+        [LOC.OPT_OFF]               = "إيقاف | OFF",
     }
 
     _G.MemoryConfig = _G.MemoryConfig or {
@@ -9599,7 +9596,7 @@ _G.BRStartSkinLoop()
             Key          = "MyTab_" .. key,
             UI           = SwitcherUI,
             Text         = textId,
-            SwitcherText = { "Head", "Chest", "Pelvis" },
+            SwitcherText = { "الرأس (Head)", "الصدر (Chest)", "الخصر (Pelvis)" },
             GetFunc = function(item)
             local index = getCb()
             if type(item) == "table" then item.CurrentIndex = index end
@@ -9956,7 +9953,7 @@ _G.BRStartSkinLoop()
                 end
             end
         ),
-        MakeSwitcher("auto_report", "Auto Report Enemies",
+        MakeSwitcher("auto_report", LOC.BTN_AUTO_REPORT,
             function() return (_G.AutoReportConfig and _G.AutoReportConfig.Enable) and 1 or 2 end,
             function(idx)
                 if not _G.AutoReportConfig then _G.AutoReportConfig = {} end
@@ -9968,22 +9965,22 @@ _G.BRStartSkinLoop()
                 end
             end
         ),
-        MakeSwitcher("auto_report_ss", "Auto Screenshot at #1",
+        MakeSwitcher("auto_report_ss", "تصوير الفوز تلقائياً (#1) | Auto Screenshot",
             function() return (_G.AutoReportConfig and _G.AutoReportConfig.AutoScreenshot) and 1 or 2 end,
             function(idx) if _G.AutoReportConfig then _G.AutoReportConfig.AutoScreenshot = (idx == 1) end end
         ),
-        MakeSlider("auto_report_reason", "Report Reason (1Cheat 2Hack 3Abuse 4Grief 5TK)", 1, 5,
+        MakeSlider("auto_report_reason", LOC.BTN_AUTO_REPORT_REASON, 1, 5,
             function() return _G.AutoReportConfig and _G.AutoReportConfig.ReportReason or 1 end,
             function(val) if _G.AutoReportConfig then _G.AutoReportConfig.ReportReason = math.floor(val) end end
         ),
-        MakeSlider("auto_report_delay", "Report Delay (sec)", 1, 10,
+        MakeSlider("auto_report_delay", LOC.BTN_AUTO_REPORT_DELAY, 1, 10,
             function() return _G.AutoReportConfig and _G.AutoReportConfig.ReportDelay or 3 end,
             function(val) if _G.AutoReportConfig then _G.AutoReportConfig.ReportDelay = val end end
         ),
         }
 
         local tabSkinSection = {
-        MakeSwitcher("skin_mod", "MOD SKIN ON/OFF",
+        MakeSwitcher("skin_mod", "تفعيل السكنات | MOD SKIN ON/OFF",
             function() return (_G.LexusConfig and _G.LexusConfig.ModSkin) and 1 or 2 end,
             function(idx)
                 if not _G.LexusConfig then _G.LexusConfig = {} end
@@ -9991,37 +9988,37 @@ _G.BRStartSkinLoop()
                 if _G.BRStartSkinLoop then _G.BRStartSkinLoop() end
             end
         ),
-        skinSlider("skin_suit", "Suit Skin", 1, 80, "SkinSuit", "OutfitSkins", "Suit"),
-        skinSlider("skin_bag", "Bag Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"),
-        skinSlider("skin_helmet", "Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"),
-        skinSlider("skin_m416", "M416 Skin", 1, 8, "SkinM416", "skinIdMappings", 101004),
-        skinSlider("skin_akm", "AKM Skin", 1, 8, "SkinAKM", "skinIdMappings", 101001),
-        skinSlider("skin_scar", "SCAR Skin", 1, 8, "SkinSCAR", "skinIdMappings", 101003),
-        skinSlider("skin_m762", "M762 Skin", 1, 8, "SkinM762", "skinIdMappings", 101008),
-        skinSlider("skin_aug", "AUG Skin", 1, 7, "SkinAUG", "skinIdMappings", 101006),
-        skinSlider("skin_ump", "UMP Skin", 1, 5, "SkinUMP", "skinIdMappings", 102002),
-        skinSlider("skin_uzi", "UZI Skin", 1, 2, "SkinUZI", "skinIdMappings", 102001),
-        skinSlider("skin_groza", "Groza Skin", 1, 2, "SkinGroza", "skinIdMappings", 101005),
-        skinSlider("skin_s12k", "S12K Skin", 1, 2, "SkinS12K", "skinIdMappings", 104003),
-        skinSlider("skin_dbs", "DBS Skin", 1, 3, "SkinDBS", "skinIdMappings", 104004),
-        skinSlider("skin_asm", "ASM Gen8 Skin", 1, 2, "SkinASM", "skinIdMappings", 101101),
-        skinSlider("skin_qbz", "QBZ Skin", 1, 2, "SkinQBZ", "skinIdMappings", 101007),
-        skinSlider("skin_honey", "Honey Badger Skin", 1, 2, "SkinHoney", "skinIdMappings", 101012),
-        skinSlider("skin_m16a4", "M16A4 Skin", 1, 2, "SkinM16A4", "skinIdMappings", 101002),
-        skinSlider("skin_ace32", "ACE32 Skin", 1, 2, "SkinACE32", "skinIdMappings", 101102),
-        skinSlider("skin_kar98k", "Kar98k Skin", 1, 2, "SkinKar98k", "skinIdMappings", 103001),
-        skinSlider("skin_m24", "M24 Skin", 1, 2, "SkinM24", "skinIdMappings", 103002),
-        skinSlider("skin_awm", "AWM Skin", 1, 2, "SkinAWM", "skinIdMappings", 103003),
-        skinSlider("skin_dacia", "Dacia Skin", 1, 34, "SkinDacia", "VehicleSkins", 1903001),
-        skinSlider("skin_uaz", "UAZ Skin", 1, 16, "SkinUAZ", "VehicleSkins", 1908001),
-        skinSlider("skin_coupe", "Coupe Skin", 1, 55, "SkinCoupe", "VehicleSkins", 1961001),
-        skinSlider("skin_buggy", "Buggy Skin", 1, 11, "SkinBuggy", "VehicleSkins", 1907002),
-        skinSlider("skin_mirado", "Mirado Skin", 1, 5, "SkinMirado", "VehicleSkins", 1915004),
-        MakeSwitcher("skin_deadbox", "DeadBox Skin",
+        skinSlider("skin_suit", "سكن البدلة | Suit Skin", 1, 80, "SkinSuit", "OutfitSkins", "Suit"),
+        skinSlider("skin_bag", "سكن الحقيبة | Bag Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"),
+        skinSlider("skin_helmet", "سكن الخوذة | Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"),
+        skinSlider("skin_m416", "سكن M416 | M416 Skin", 1, 8, "SkinM416", "skinIdMappings", 101004),
+        skinSlider("skin_akm", "سكن AKM | AKM Skin", 1, 8, "SkinAKM", "skinIdMappings", 101001),
+        skinSlider("skin_scar", "سكن SCAR-L | SCAR-L Skin", 1, 8, "SkinSCAR", "skinIdMappings", 101003),
+        skinSlider("skin_m762", "سكن M762 | M762 Skin", 1, 8, "SkinM762", "skinIdMappings", 101008),
+        skinSlider("skin_aug", "سكن AUG | AUG Skin", 1, 7, "SkinAUG", "skinIdMappings", 101006),
+        skinSlider("skin_ump", "سكن UMP45 | UMP45 Skin", 1, 5, "SkinUMP", "skinIdMappings", 102002),
+        skinSlider("skin_uzi", "سكن UZI | UZI Skin", 1, 2, "SkinUZI", "skinIdMappings", 102001),
+        skinSlider("skin_groza", "سكن Groza | Groza Skin", 1, 2, "SkinGroza", "skinIdMappings", 101005),
+        skinSlider("skin_s12k", "سكن S12K | S12K Skin", 1, 2, "SkinS12K", "skinIdMappings", 104003),
+        skinSlider("skin_dbs", "سكن DBS | DBS Skin", 1, 3, "SkinDBS", "skinIdMappings", 104004),
+        skinSlider("skin_asm", "سكن ASM Gen8 | ASM Skin", 1, 2, "SkinASM", "skinIdMappings", 101101),
+        skinSlider("skin_qbz", "سكن QBZ | QBZ Skin", 1, 2, "SkinQBZ", "skinIdMappings", 101007),
+        skinSlider("skin_honey", "سكن هوني بادجر | Honey Badger", 1, 2, "SkinHoney", "skinIdMappings", 101012),
+        skinSlider("skin_m16a4", "سكن M16A4 | M16A4 Skin", 1, 2, "SkinM16A4", "skinIdMappings", 101002),
+        skinSlider("skin_ace32", "سكن ACE32 | ACE32 Skin", 1, 2, "SkinACE32", "skinIdMappings", 101102),
+        skinSlider("skin_kar98k", "سكن Kar98k | Kar98k Skin", 1, 2, "SkinKar98k", "skinIdMappings", 103001),
+        skinSlider("skin_m24", "سكن M24 | M24 Skin", 1, 2, "SkinM24", "skinIdMappings", 103002),
+        skinSlider("skin_awm", "سكن AWM | AWM Skin", 1, 2, "SkinAWM", "skinIdMappings", 103003),
+        skinSlider("skin_dacia", "سكن داسيا | Dacia Car Skin", 1, 34, "SkinDacia", "VehicleSkins", 1903001),
+        skinSlider("skin_uaz", "سكن جيب UAZ | UAZ Jeep Skin", 1, 16, "SkinUAZ", "VehicleSkins", 1908001),
+        skinSlider("skin_coupe", "سكن كوبيه | Coupe Car Skin", 1, 55, "SkinCoupe", "VehicleSkins", 1961001),
+        skinSlider("skin_buggy", "سكن باجي | Buggy Skin", 1, 11, "SkinBuggy", "VehicleSkins", 1907002),
+        skinSlider("skin_mirado", "سكن ميرادو | Mirado Skin", 1, 5, "SkinMirado", "VehicleSkins", 1915004),
+        MakeSwitcher("skin_deadbox", "سكن صندوق الموتى | DeadBox Skin",
             function() return (_G.LexusConfig and _G.LexusConfig.SkinDeadBox) and 1 or 2 end,
             function(idx) if not _G.LexusConfig then _G.LexusConfig = {} end _G.LexusConfig.SkinDeadBox = (idx == 1) end
         ),
-        MakeSwitcher("skin_attach", "Attachment Skin",
+        MakeSwitcher("skin_attach", "سكن الملحقات كاملة | Attachment Skin",
             function() return (_G.LexusConfig and _G.LexusConfig.SkinAttachment) and 1 or 2 end,
             function(idx) if not _G.LexusConfig then _G.LexusConfig = {} end _G.LexusConfig.SkinAttachment = (idx == 1) end
         )
@@ -10034,7 +10031,7 @@ _G.BRStartSkinLoop()
             UIKey = "Setting_Page_Game",
             Stack = MakeStack({
             { title = LOC.TITLE_AIMING,   items = tab1Section1 },
-            { title = LOC.TITLE_SETTINGS, items = tab1Section2 },
+            { title = "خيارات الايمبوت المتقدمة | Advanced Aim Settings", items = tab1Section2 },
             }),
         },
         {
@@ -10448,7 +10445,7 @@ pcall(function()
             if self.UIRoot and self.UIRoot.TextBlock_quality then
                 local _FSlateColor = import("SlateColor") or import("/Script/SlateCore.SlateColor")
                 local _FLinearColor = import("LinearColor")
-                self.UIRoot.TextBlock_quality:SetText("  ♕ MANSY GAMING ♕  ")
+                self.UIRoot.TextBlock_quality:SetText("  ♕ MANSY GAMING VIP | مانسي ♕  ")
                 self.UIRoot.TextBlock_quality:SetColorAndOpacity(_FSlateColor(_FLinearColor(1, 1, 0, 1)))
             end
         end
