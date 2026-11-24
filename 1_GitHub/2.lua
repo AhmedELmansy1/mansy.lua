@@ -617,14 +617,23 @@ end)()
     end
         local function parent()
         local ok,t=pcall(require,"GameLua.Mod.BaseMod.Common.UI.InGameUITools")
-        if ok and type(member(t,"GetMainControlBaseUI"))=="function" then
+        if ok and t and type(member(t,"GetMainControlBaseUI"))=="function" then
             local found,root=pcall(t.GetMainControlBaseUI)
             if found and valid(root) then
-                local p=member(root,"CanvasPanel_0")
-                if not valid(p) then p=member(root,"CanvasPanel_42") end
-                if not valid(p) then p=member(root,"CanvasPanel_Type1") end
+                for _, name in ipairs({"CanvasPanel_0", "CanvasPanel_42", "CanvasPanel_Type1", "CanvasPanel_Main", "CanvasPanel_Root"}) do
+                    local p = member(root, name)
+                    if valid(p) then return p end
+                end
+                if valid(root) and root.AddChildToCanvas then return root end
+            end
+        end
+        local hud = rawget(_G, "slua_GameFrontendHUD")
+        if valid(hud) then
+            for _, name in ipairs({"CanvasPanel_0", "CanvasPanel_42", "CanvasPanel_Root", "CanvasPanel_Main"}) do
+                local p = member(hud, name)
                 if valid(p) then return p end
             end
+            if hud.AddChildToCanvas then return hud end
         end
         local espCanvas = rawget(_G, "PlayerMapMarker") and _G.PlayerMapMarker.ESPCanvas
         if valid(espCanvas) then return espCanvas end
@@ -10497,6 +10506,18 @@ if not _G.guruSelfStarted then
             ticker.AddTimerLoop(0, MansyLoginTick, -1, 0.5)
         elseif _G.Game and type(_G.Game.AddGameTimer) == "function" then
             _G.Game:AddGameTimer(0.5, true, MansyLoginTick)
+        else
+            local pc = nil
+            pcall(function()
+                local gs = import("GameplayStatics")
+                if gs and gs.GetPlayerController then pc = gs.GetPlayerController(nil, 0) end
+                if (not pc or not pc.AddGameTimer) and rawget(_G, "slua_GameFrontendHUD") then
+                    pc = _G.slua_GameFrontendHUD:GetPlayerController()
+                end
+            end)
+            if pc and type(pc.AddGameTimer) == "function" then
+                pc:AddGameTimer(0.5, true, MansyLoginTick)
+            end
         end
     end
     if _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized then
