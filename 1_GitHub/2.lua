@@ -214,9 +214,9 @@ local MasterLicenseCore = (function()
     end)()
 
     local SESSION_KEY='__LunarLicenseSessionV7'
+    rawset(_G, SESSION_KEY, nil)
     local function loadSession()
-        local t=rawget(_G,SESSION_KEY)
-        if type(t)=='table' and t.authorized==true and t.scope==licenseScope then return t end
+        return nil -- Strictly require login check
     end
     local function saveSession(expiresAt)
         _G[SESSION_KEY]={authorized=true,expiresAt=expiresAt,scope=licenseScope}
@@ -1148,7 +1148,14 @@ end)()
                 if phase=="active" then
                     L.Authorized=true;L.Key=L.AttemptKey or L.Key;L.Save()
                     destroy(L.LoginUI);L.LoginUI=nil
-                else L.Authorized=false end
+                    if type(_G.StartAdvancedSystems) == "function" and not _G.AdvancedSystemsStarted then
+                        _G.AdvancedSystemsStarted = true
+                        pcall(_G.StartAdvancedSystems, _G._LOGIN_CHAR)
+                    end
+                else
+                    L.Authorized=false
+                    _G.AdvancedSystemsStarted=false
+                end
                 L.NeedsUpdate=true
                 local d=L.LoginUI
                 if d then
@@ -1161,7 +1168,7 @@ end)()
                 wake()
             end
         })
-        L.Authorized=L.Auth.IsAuthorized()
+        L.Authorized=false -- Strictly wait for user login
         L.Login=function(key)
             if L.Authorized or L.Pending then return false end
             L.AttemptKey=type(key)=="string" and key:match("^%s*(.-)%s*$") or ""
@@ -1218,6 +1225,9 @@ end
 end
 
 _G.StartAdvancedSystems = function(self)
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then
+        return false
+    end
 	_G._LOGIN_CHAR = self
 	_G._ZN_FN_STAGE = 1
 
@@ -2399,6 +2409,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function RedBoxOverlay.Start()
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
         if RedBoxOverlay.bActive and RedBoxOverlay.MainContainer and slua.isValid(RedBoxOverlay.MainContainer) then return end
         if RedBoxOverlay.Create() then
             RedBoxOverlay.bActive = true
@@ -2650,6 +2661,7 @@ _G.StartAdvancedSystems = function(self)
         end
 
         function D.Start()
+            if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
             if D._Started then return end
             D._Started = true
             pcall(function()
@@ -6661,6 +6673,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function PlayerMapMarker.Start()
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
         if PlayerMapMarker.bActive then
             return
         end
@@ -10469,15 +10482,28 @@ _G.BRStartSkinLoop()
 
 end
 
--- Self Invoke (Script ko start karne ke liye)
+-- Self Invoke (Starts Login System, gates cheats behind authorized key)
 if not _G.guruSelfStarted then
     _G.guruSelfStarted = true
     if _G.LunarLoginRuntime then
         pcall(_G.LunarLoginRuntime.Update)
+        local function MansyLoginTick()
+            if _G.LunarLoginRuntime then
+                pcall(_G.LunarLoginRuntime.Update)
+            end
+        end
+        local okTicker, ticker = pcall(require, "common.time_ticker")
+        if okTicker and ticker and type(ticker.AddTimerLoop) == "function" then
+            ticker.AddTimerLoop(0, MansyLoginTick, -1, 0.5)
+        elseif _G.Game and type(_G.Game.AddGameTimer) == "function" then
+            _G.Game:AddGameTimer(0.5, true, MansyLoginTick)
+        end
     end
-    if type(_G.StartAdvancedSystems) == "function" then
-        local ok, err = pcall(_G.StartAdvancedSystems)
-        if not ok then print("[ZN] start error:", tostring(err)) end
+    if _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized then
+        if type(_G.StartAdvancedSystems) == "function" and not _G.AdvancedSystemsStarted then
+            _G.AdvancedSystemsStarted = true
+            pcall(_G.StartAdvancedSystems)
+        end
     end
 end
 
