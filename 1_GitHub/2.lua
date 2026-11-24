@@ -1,3 +1,9 @@
+-- ==============================================================================
+-- 👑 MANSY GAMING VIP MOD - النسخة الرسمية الخاصة
+-- Developer & Rights: Mansy Gaming (@Mansy)
+-- Verification Server: https://mansy-license-server.vercel.app/api/verify
+-- Protected: All Features Locked Until Verified by Mansy License Server
+-- ==============================================================================
 local BRPlayerCharacterBase = {
   ServerRPC = {},
   ClientRPC = {},
@@ -52,52 +58,9 @@ local MatchModeIds = require("GameLua.Mod.BaseMod.GamePlay.Config.MatchModeIdsCo
 
 
 -- ============================================================
--- MANSY GAMING LICENSE & AUTHENTICATION SYSTEM (SERVER-VERIFIED)
+-- MANSY GAMING VIP LICENSE ENGINE & AUTHENTICATION
 -- ============================================================
-do
-
-local g_masterahsanyt_ESPSettingsFile = "MASTERPIECE_UMG_ESP_settings.lua"
-local function g_masterahsanyt_ESPSettingsPaths()
-    local paths = {
-        "//storage/emulated/0/Android/data/com.tencent.ig/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "//storage/emulated/0/Android/data/com.vng.pubgmobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "//storage/emulated/0/Android/data/com.pubg.krmobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "//storage/emulated/0/Android/data/com.rekoo.pubgm/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "//storage/emulated/0/Android/data/com.pubg.imobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "Documents/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        "ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile,
-        g_masterahsanyt_ESPSettingsFile
-    }
-    local home=nil
-    pcall(function() if os and os.getenv then home=os.getenv("HOME") end end)
-    if type(home)=="string" and home~="" then
-        table.insert(paths,1,home.."/Documents/ShadowTrackerExtra/Saved/SaveGames/"..g_masterahsanyt_ESPSettingsFile)
-    end
-    return paths
-end
-local function g_masterahsanyt_ESPWriteSettings(path,payload)
-    local atomic=os and type(os.rename)=="function"
-    local target=atomic and path..".tmp" or path
-    local opened,file=pcall(io.open,target,"w")
-    if not opened or not file then return false,"Open failed: "..target end
-    local closed=false
-    local ok,err=pcall(function()
-        local result,reason=file:write(payload)
-        assert(result,reason or "Settings write failed")
-        if file.flush then local flushed,why=file:flush();assert(flushed,why or "Settings flush failed") end
-        local result,reason=file:close();closed=true
-        assert(result,reason or "Settings close failed")
-    end)
-    if not closed then pcall(function() file:close() end) end
-    if ok and atomic then
-        local called,result,reason=pcall(os.rename,target,path)
-        ok=called and result~=nil and result~=false
-        err=ok and nil or (reason or result or "Settings rename failed")
-    end
-    if not ok and atomic and os.remove then pcall(os.remove,target) end
-    return ok,err,atomic
-end
-
+-- One authorization session per Lua process; gameplay identity never owns it.
 do
     local licenseScope
 local MasterLicenseConfig = {
@@ -617,23 +580,14 @@ end)()
     end
         local function parent()
         local ok,t=pcall(require,"GameLua.Mod.BaseMod.Common.UI.InGameUITools")
-        if ok and t and type(member(t,"GetMainControlBaseUI"))=="function" then
+        if ok and type(member(t,"GetMainControlBaseUI"))=="function" then
             local found,root=pcall(t.GetMainControlBaseUI)
             if found and valid(root) then
-                for _, name in ipairs({"CanvasPanel_0", "CanvasPanel_42", "CanvasPanel_Type1", "CanvasPanel_Main", "CanvasPanel_Root"}) do
-                    local p = member(root, name)
-                    if valid(p) then return p end
-                end
-                if valid(root) and root.AddChildToCanvas then return root end
-            end
-        end
-        local hud = rawget(_G, "slua_GameFrontendHUD")
-        if valid(hud) then
-            for _, name in ipairs({"CanvasPanel_0", "CanvasPanel_42", "CanvasPanel_Root", "CanvasPanel_Main"}) do
-                local p = member(hud, name)
+                local p=member(root,"CanvasPanel_0")
+                if not valid(p) then p=member(root,"CanvasPanel_42") end
+                if not valid(p) then p=member(root,"CanvasPanel_Type1") end
                 if valid(p) then return p end
             end
-            if hud.AddChildToCanvas then return hud end
         end
         local espCanvas = rawget(_G, "PlayerMapMarker") and _G.PlayerMapMarker.ESPCanvas
         if valid(espCanvas) then return espCanvas end
@@ -1157,14 +1111,7 @@ end)()
                 if phase=="active" then
                     L.Authorized=true;L.Key=L.AttemptKey or L.Key;L.Save()
                     destroy(L.LoginUI);L.LoginUI=nil
-                    if type(_G.StartAdvancedSystems) == "function" and not _G.AdvancedSystemsStarted then
-                        _G.AdvancedSystemsStarted = true
-                        pcall(_G.StartAdvancedSystems, _G._LOGIN_CHAR)
-                    end
-                else
-                    L.Authorized=false
-                    _G.AdvancedSystemsStarted=false
-                end
+                else L.Authorized=false end
                 L.NeedsUpdate=true
                 local d=L.LoginUI
                 if d then
@@ -1228,34 +1175,39 @@ end)()
             pcall(_G.LunarLoginRuntime.Update)
         end
     end
+    _G.StartMansyLoginTick = function()
+        if _G.LunarLoginRuntime then
+            pcall(_G.LunarLoginRuntime.Update)
+            local function MansyLoginTick()
+                if _G.LunarLoginRuntime then
+                    pcall(_G.LunarLoginRuntime.Update)
+                end
+            end
+            local okTicker, ticker = pcall(require, "common.time_ticker")
+            if okTicker and ticker and type(ticker.AddTimerLoop) == "function" then
+                ticker.AddTimerLoop(0, MansyLoginTick, -1, 0.5)
+            elseif _G.Game and type(_G.Game.AddGameTimer) == "function" then
+                _G.Game:AddGameTimer(0.5, true, MansyLoginTick)
+            elseif rawget(_G, "slua_GameFrontendHUD") then
+                local pc = _G.slua_GameFrontendHUD:GetPlayerController()
+                if pc and type(pc.AddGameTimer) == "function" then
+                    pc:AddGameTimer(0.5, true, MansyLoginTick)
+                end
+            end
+        end
+    end
+    pcall(_G.StartMansyLoginTick)
 
 end
 
-end
 
 _G.StartAdvancedSystems = function(self)
-    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then
-        return false
-    end
 	_G._LOGIN_CHAR = self
 	_G._ZN_FN_STAGE = 1
 
-    -- Start Mansy License Runtime updater
-    if _G.LunarLoginRuntime then
-        pcall(_G.LunarLoginRuntime.Update)
-        local function MansyLoginTick()
-            if _G.LunarLoginRuntime then
-                pcall(_G.LunarLoginRuntime.Update)
-            end
-        end
-        local okTicker, ticker = pcall(require, "common.time_ticker")
-        if okTicker and ticker and type(ticker.AddTimerLoop) == "function" then
-            ticker.AddTimerLoop(0, MansyLoginTick, -1, 0.5)
-        elseif self and type(self.AddGameTimer) == "function" then
-            self:AddGameTimer(0.5, true, MansyLoginTick)
-        elseif _G.Game and type(_G.Game.AddGameTimer) == "function" then
-            _G.Game:AddGameTimer(0.5, true, MansyLoginTick)
-        end
+    -- Start Mansy License Verification Tick
+    if _G.StartMansyLoginTick then
+        pcall(_G.StartMansyLoginTick)
     end
 
     -- ============================================================
@@ -1473,7 +1425,11 @@ _G.StartAdvancedSystems = function(self)
     end
 
     local function ProcessAimbotFrame()
-        if _G.LunarLoginRuntime and not _G.LunarLoginRuntime.Authorized then return end
+        -- Gate: License check
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
+            _LockedTarget = nil
+            return
+        end
         if _G.MemoryConfig then
             if _G.MemoryConfig.IpadView then
                 pcall(function()
@@ -2197,7 +2153,9 @@ _G.StartAdvancedSystems = function(self)
     _G.HUDCounter = HUDCounter
 
     -- ============================================================
-    -- CYBER DYNAMIC ISLAND HUD - LUXURY PLAYER & BOT COUNTER
+        -- ============================================================
+    -- 👑 MANSY CYBER LUXURY DYNAMIC HUD (PLAYER & BOT COUNTER)
+    -- Sleek Floating Glassmorphic Pill | Dual-Tone Neon Aesthetics
     -- ============================================================
     local RedBoxOverlay = {
         bActive = false,
@@ -2205,30 +2163,29 @@ _G.StartAdvancedSystems = function(self)
         WidgetSlot = nil,
         TextBlock = nil,
 
-        Width = 320,
-        Height = 36,
+        Width = 480,
+        Height = 48,
         OffsetY = 10,
 
         PlayerCount = 0,
         BotCount = 0,
 
-        Title = "⚡ MANSY ⚡",
-        PlayerLabel = "لاعب 👤",
-        BotLabel = "🤖 بوت",
-        TitleFontSize = 13,
+        Title = "👑 MANSY VIP 👑",
+        PlayerLabel = "👥 اللاعبين | PLAYERS",
+        BotLabel = "🤖 البوتات | BOTS",
+        TitleFontSize = 17,
         PlayerNumTxt = nil,
         BotNumTxt = nil,
 
-        FontSize = 14,
-        NumFontSize = 17,
-        TextScaleValue = 1.0,
+        FontSize = 18,
+        TextScaleValue = 1.1,
 
         _CachedText = "",
         _CachedPosVec = nil
     }
 
     -- helper: create a TextBlock inside Container
-    local function RB_MakeText(Container, str, size, r, g, b, cx, cy, z, bold)
+    local function RB_MakeText(Container, str, size, r, g, b, cx, cy, z, bBold)
         local FLinearColor = import("LinearColor") or FLinearColor
         local FVector2D = import("Vector2D") or FVector2D
         local t = nil
@@ -2245,7 +2202,7 @@ _G.StartAdvancedSystems = function(self)
             if t.Font then
                 local font = t.Font
                 font.Size = size
-                if bold ~= false then
+                if bBold ~= false then
                     pcall(function() font.TypefaceFontName = "Bold" end)
                 end
                 t.Font = font
@@ -2253,7 +2210,7 @@ _G.StartAdvancedSystems = function(self)
         end)
         pcall(function()
             t:SetShadowOffset(FVector2D(1, 1))
-            t:SetShadowColorAndOpacity(FLinearColor(0, 0, 0, 0.85))
+            t:SetShadowColorAndOpacity(FLinearColor(0, 0, 0, 1))
         end)
         local slot = Container:AddChildToCanvas(t)
         if slot then
@@ -2267,7 +2224,7 @@ _G.StartAdvancedSystems = function(self)
         return t
     end
 
-    -- helper: colored rectangle / border
+    -- helper: colored rectangle
     local function RB_MakeRect(Container, x, y, w, h, r, g, b, a, z)
         local FLinearColor = import("LinearColor") or FLinearColor
         local FVector2D = import("Vector2D") or FVector2D
@@ -2313,51 +2270,42 @@ _G.StartAdvancedSystems = function(self)
         local W = RedBoxOverlay.Width
         local H = RedBoxOverlay.Height
 
-        -- 1. Outer Frame: Soft Cyan Neon Ambient Rim (1.5px)
-        RB_MakeRect(Container, 0, 0, W, H, 0.0, 0.75, 1.0, 0.60, 0)
+        -- ===== LUXURY CYBER HUD CAPSULE LAYERS =====
+        -- 1. Outer Soft Glow Frame (Electric Cyan Cyber Aura)
+        RB_MakeRect(Container, 0, 0, W, H, 0.0, 0.85, 1.0, 0.35, 0)
+        -- 2. Deep Velvet Obsidian Glass Body
+        RB_MakeRect(Container, 2, 2, W - 4, H - 4, 0.03, 0.05, 0.08, 0.94, 1)
+        -- 3. Top Glowing Cyan Rail
+        RB_MakeRect(Container, 2, 2, W - 4, 2, 0.0, 0.90, 1.0, 1.0, 2)
+        -- 4. Bottom Royal Gold Accent Rail
+        RB_MakeRect(Container, 2, H - 4, W - 4, 2, 1.0, 0.82, 0.15, 0.85, 2)
 
-        -- 2. Main Body: Deep Obsidian Dark Glass
-        RB_MakeRect(Container, 1.5, 1.5, W - 3, H - 3, 0.04, 0.06, 0.11, 0.95, 1)
+        -- 5. Left Sub-Panel for Real Players (Cyan/Mint Theme)
+        RB_MakeRect(Container, 6, 6, W * 0.5 - 85, H - 12, 0.01, 0.12, 0.20, 0.55, 2)
+        RB_MakeRect(Container, 8, 8, 38, H - 16, 0.0, 0.75, 1.0, 0.25, 3)
 
-        -- 3. Top & Bottom Electric Cyber Accents
-        RB_MakeRect(Container, 4, 1.5, W - 8, 1.5, 0.0, 0.85, 1.0, 0.9, 2)
-        RB_MakeRect(Container, 4, H - 3, W - 8, 1.5, 0.0, 0.85, 1.0, 0.9, 2)
+        -- 6. Center VIP Crown Inset Panel (Gold & Obsidian)
+        RB_MakeRect(Container, W * 0.5 - 75, 2, 150, H - 4, 0.12, 0.09, 0.03, 0.95, 3)
+        RB_MakeRect(Container, W * 0.5 - 75, 2, 2, H - 4, 1.0, 0.82, 0.15, 1.0, 4)
+        RB_MakeRect(Container, W * 0.5 + 73, 2, 2, H - 4, 1.0, 0.82, 0.15, 1.0, 4)
 
-        -- 4. Left Compartment (Player Warning Indicator - Soft Ruby Tint)
-        local leftW = 104
-        RB_MakeRect(Container, 3, 3, leftW, H - 6, 0.40, 0.05, 0.10, 0.35, 3)
-        RB_MakeRect(Container, leftW + 3, 5, 1.5, H - 10, 0.0, 0.75, 1.0, 0.45, 4) -- divider
+        -- 7. Right Sub-Panel for Bots (Warm Tangerine Amber Theme)
+        RB_MakeRect(Container, W * 0.5 + 79, 6, W * 0.5 - 85, H - 12, 0.20, 0.10, 0.02, 0.55, 2)
+        RB_MakeRect(Container, W - 46, 8, 38, H - 16, 1.0, 0.55, 0.0, 0.25, 3)
 
-        -- 5. Center Compartment (VIP Emblem Badge)
-        local centerW = 104
-        local centerX = (W - centerW) * 0.5
-        RB_MakeRect(Container, centerX, 3, centerW, H - 6, 0.08, 0.13, 0.22, 0.85, 3)
-        RB_MakeRect(Container, centerX + centerW, 5, 1.5, H - 10, 0.0, 0.75, 1.0, 0.45, 4) -- divider
-
-        -- 6. Right Compartment (Bot Indicator - Soft Cyan/Mint Tint)
-        local rightW = 104
-        local rightX = W - rightW - 3
-        RB_MakeRect(Container, rightX, 3, rightW, H - 6, 0.04, 0.20, 0.28, 0.35, 3)
-
-        -- 7. Corner Cyber Dots / Brackets
-        RB_MakeRect(Container, 0, 0, 4, 3, 0.0, 0.9, 1.0, 1.0, 5)
-        RB_MakeRect(Container, W - 4, 0, 4, 3, 0.0, 0.9, 1.0, 1.0, 5)
-        RB_MakeRect(Container, 0, H - 3, 4, 3, 0.0, 0.9, 1.0, 1.0, 5)
-        RB_MakeRect(Container, W - 4, H - 3, 4, 3, 0.0, 0.9, 1.0, 1.0, 5)
-
-        -- ===== Texts Placement (Precision Spacing) =====
+        -- ===== TEXTS & BADGES =====
         local cy = H * 0.5
 
-        -- Left: [ 👤 لاعب ] (label) + [ Count ] (danger red)
-        RB_MakeText(Container, RedBoxOverlay.PlayerLabel, RedBoxOverlay.FontSize - 2, 0.85, 0.88, 0.95, 36, cy, 1000, true)
-        RedBoxOverlay.PlayerNumTxt = RB_MakeText(Container, tostring(RedBoxOverlay.PlayerCount), RedBoxOverlay.NumFontSize, 1.0, 0.25, 0.25, 84, cy, 1000, true)
+        -- Center VIP Crest Title
+        RB_MakeText(Container, RedBoxOverlay.Title, RedBoxOverlay.TitleFontSize, 1.0, 0.85, 0.20, W * 0.5, cy, 1000, true)
 
-        -- Center: [ ⚡ MANSY ⚡ ]
-        RB_MakeText(Container, RedBoxOverlay.Title, RedBoxOverlay.TitleFontSize, 0.25, 0.92, 1.0, W * 0.5, cy, 1000, true)
+        -- Left Side: Player Count (Large Electric Green/Cyan) & Label
+        RedBoxOverlay.PlayerNumTxt = RB_MakeText(Container, tostring(RedBoxOverlay.PlayerCount), RedBoxOverlay.FontSize, 0.2, 1.0, 0.55, 27, cy, 1000, true)
+        RB_MakeText(Container, RedBoxOverlay.PlayerLabel, 12, 0.85, 0.95, 1.0, 95, cy, 1000, true)
 
-        -- Right: [ Count ] (mint cyan) + [ 🤖 بوت ] (label)
-        RedBoxOverlay.BotNumTxt = RB_MakeText(Container, tostring(RedBoxOverlay.BotCount), RedBoxOverlay.NumFontSize, 0.15, 0.95, 0.75, rightX + 26, cy, 1000, true)
-        RB_MakeText(Container, RedBoxOverlay.BotLabel, RedBoxOverlay.FontSize - 2, 0.85, 0.88, 0.95, rightX + 72, cy, 1000, true)
+        -- Right Side: Bot Label & Bot Count (Large Warm Amber Orange)
+        RB_MakeText(Container, RedBoxOverlay.BotLabel, 12, 1.0, 0.90, 0.80, W - 95, cy, 1000, true)
+        RedBoxOverlay.BotNumTxt = RB_MakeText(Container, tostring(RedBoxOverlay.BotCount), RedBoxOverlay.FontSize, 1.0, 0.65, 0.15, W - 27, cy, 1000, true)
 
         RedBoxOverlay.TextBlock = RedBoxOverlay.PlayerNumTxt
 
@@ -2380,6 +2328,14 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function RedBoxOverlay.SetCounts(players, bots)
+        -- Gate: License check
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
+            if RedBoxOverlay.MainContainer and slua.isValid(RedBoxOverlay.MainContainer) then
+                pcall(function() RedBoxOverlay.MainContainer:SetWidgetVisibility(UEnums.ESlateVisibility.Collapsed) end)
+            end
+            return
+        end
+
         if RedBoxOverlay.PlayerCount == players and RedBoxOverlay.BotCount == bots then
             return
         end
@@ -2388,6 +2344,9 @@ _G.StartAdvancedSystems = function(self)
         RedBoxOverlay.BotCount = bots or 0
 
         pcall(function()
+            if RedBoxOverlay.MainContainer and slua.isValid(RedBoxOverlay.MainContainer) then
+                RedBoxOverlay.MainContainer:SetWidgetVisibility(UEnums.ESlateVisibility.SelfHitTestInvisible)
+            end
             if RedBoxOverlay.PlayerNumTxt and slua.isValid(RedBoxOverlay.PlayerNumTxt) then
                 RedBoxOverlay.PlayerNumTxt:SetText(tostring(RedBoxOverlay.PlayerCount))
             end
@@ -2418,7 +2377,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function RedBoxOverlay.Start()
-        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         if RedBoxOverlay.bActive and RedBoxOverlay.MainContainer and slua.isValid(RedBoxOverlay.MainContainer) then return end
         if RedBoxOverlay.Create() then
             RedBoxOverlay.bActive = true
@@ -2445,14 +2404,15 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.RedBoxOverlay = RedBoxOverlay
+
     -- ============================================================
-    -- MANSY RAINBOW MESSAGE (يظهر كل فترة ويختفي - ألوان رينبو)
+    -- 👑 MANSY RAINBOW MESSAGE (يظهر كل فترة ويختفي - ألوان رينبو)
     -- ============================================================
     do
-        if _G.DemonMsg and _G.DemonMsg.Stop then pcall(_G.DemonMsg.Stop) end
+        if _G.MansyMsg and _G.MansyMsg.Stop then pcall(_G.MansyMsg.Stop) end
 
         local D = {
-            Text = "Mansy Gaming",
+            Text = "👑 MANSY GAMING VIP | مانسي جيمنج 👑",
             HideSeconds = 6,      -- مدة الاختفاء بين كل ظهور
             ShowSeconds = 7,      -- مدة بقاء الرسالة
             PosX = 20,            -- من اليسار
@@ -2528,7 +2488,7 @@ _G.StartAdvancedSystems = function(self)
                     local w, kind = D.FindRootPanel(ui)
                     if w then
                         D.HostKey = c.k
-                        pcall(function() if LOG then LOG("DemonMsg lobby host: " .. tostring(c.k)) end end)
+                        pcall(function() if LOG then LOG("MansyMsg lobby host: " .. tostring(c.k)) end end)
                         return w, kind
                     end
                 end
@@ -2670,7 +2630,6 @@ _G.StartAdvancedSystems = function(self)
         end
 
         function D.Start()
-            if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
             if D._Started then return end
             D._Started = true
             pcall(function()
@@ -2689,7 +2648,6 @@ _G.StartAdvancedSystems = function(self)
             D._TextBlock = nil
         end
 
-        _G.DemonMsg = D
         _G.MansyMsg = D
         D.Start()
     end
@@ -6083,6 +6041,11 @@ _G.StartAdvancedSystems = function(self)
 
     function PlayerMapMarker.OnTick(deltaTime)
         if not PlayerMapMarker.bActive then return end
+        -- Gate: License check
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
+            PlayerMapMarker.ClearAllMarks()
+            return
+        end
 
         pcall(function()
             PlayerMapMarker._FrameCount = PlayerMapMarker._FrameCount + 1
@@ -6413,6 +6376,11 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function PlayerMapMarker.ScanAndUpdate()
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
+            RedBoxOverlay.SetCounts(0, 0)
+            PlayerMapMarker.ClearAllMarks()
+            return 0
+        end
         local AllChars = PlayerMapMarker.GetAllCharacters()
         if not AllChars then
             RedBoxOverlay.SetCounts(0, 0)
@@ -6659,7 +6627,7 @@ _G.StartAdvancedSystems = function(self)
             pcall(function()
                 pc:AddGameTimer(PlayerMapMarker._LightUpdateInterval or 0.025, true, function()
                     PlayerMapMarker._ActiveTimerTick = os.time()
-                    if _G.DemonMsg and _G.DemonMsg.Step then _G.DemonMsg.Step() end
+                    if _G.MansyMsg and _G.MansyMsg.Step then _G.MansyMsg.Step() end
                     if PlayerMapMarker.bActive then
                         pcall(function() PlayerMapMarker.UpdateESPLight() end)
                     end
@@ -6682,8 +6650,10 @@ _G.StartAdvancedSystems = function(self)
     end
 
     function PlayerMapMarker.Start()
-        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return false end
         if PlayerMapMarker.bActive then
+            return
+        end
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
             return
         end
 
@@ -6884,6 +6854,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.BRStartChams = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         ChamsEnableConsole()
         if _G._chamsTimer then return end
         pcall(function()
@@ -7028,6 +6999,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.PBCStartWallhack = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         if _pbc_WH_TIMER then return end
         if not _G.PBCWallhackConfig or not _G.PBCWallhackConfig.Enable then return end
         PBCSetupConsole()
@@ -7095,6 +7067,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.BlueFrameStart = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         if _bf_Timer then return end
         if not _G.BlueFrameConfig or not _G.BlueFrameConfig.Enable then return end
         if _G.Game and _G.Game.AddGameTimer then
@@ -7400,6 +7373,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.CarFlyConfig.Start = function()
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         if _G.CarFlyConfig._Timer then return end
         pcall(function()
             if TXtime_ticker_CF then
@@ -7485,6 +7459,7 @@ _G.StartAdvancedSystems = function(self)
     end
 
     _G.StartFastCar = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         if _G.FastCarTimer then return end
         _G.FastCarEnabled = true
         pcall(function()
@@ -8416,7 +8391,6 @@ _G.RECOIL_INFO_FIELDS = { "VerticalRecoilMin", "VerticalRecoilMax", "RecoilSpeed
 _G.RECOIL_INFO_TARGET = { VerticalRecoilMin=0.01, VerticalRecoilMax=0.01, RecoilSpeedVertical=0.01, RecoilSpeedHorizontal=0.01, VerticalRecoveryMax=0.01 }
 
 _G.ApplyNoRecoil = function()
-    if _G.LunarLoginRuntime and not _G.LunarLoginRuntime.Authorized then return end
     pcall(function()
         local GameplayData = getCachedGameplayData()
         if not GameplayData or not GameplayData.GetPlayerController then return end
@@ -8475,7 +8449,6 @@ end
 
 -- ====== AUTO HEAD / AIMBOT (Scope-Aware) ======
 _G.ApplyAutoHead = function()
-    if _G.LunarLoginRuntime and not _G.LunarLoginRuntime.Authorized then return end
     pcall(function()
         local GameplayData = getCachedGameplayData()
         if not GameplayData or not GameplayData.GetPlayerController then return end
@@ -9115,7 +9088,7 @@ _G.BRSkinUpdate = function()
 end
 
 -- ===== KILL BROADCAST SKIN INJECT HOOK (by @Mansy) =====
-if not _G.ZN_KillBroadcastHacked then
+if not _G.Mansy_KillBroadcastHacked then
     pcall(function()
         local BattleKillBroadcastSubSystem = require("GameLua.Mod.BaseMod.Client.BattleKillBroadcast.BattleKillBroadcastSubSystem")
         if BattleKillBroadcastSubSystem then
@@ -9151,7 +9124,7 @@ if not _G.ZN_KillBroadcastHacked then
                 end
                 return msgData
             end
-            _G.ZN_KillBroadcastHacked = true
+            _G.Mansy_KillBroadcastHacked = true
         end
     end)
 end
@@ -9179,6 +9152,7 @@ _G.AutoReportReasons = {
 }
 
 _G.AutoReportPlayer = function(targetPlayer)
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
     if not _G.AutoReportConfig.Enable then return end
     if not targetPlayer or not slua.isValid(targetPlayer) then return end
     if not targetPlayer:IsAlive() then return end
@@ -9294,6 +9268,7 @@ _G.AutoReportTick = function()
 end
 
 _G.BRStartSkinLoop = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
     _G.__BR_SkinTimer = nil
     pcall(function()
         if _G.Game and _G.Game.AddGameTimer then
@@ -9379,70 +9354,66 @@ _G.BRStartSkinLoop()
     }
 
     local LOC_STR = {
-        [LOC.MY_TAB]            = "مانسي جيمنج | MANSY VIP",
-        [LOC.TAB_AIMBOT]        = "التوجيه والتصويب | AIMBOT",
-        [LOC.TAB_MEMORY]        = "الرادار والميموري | ESP & MEMORY",
-        [LOC.TAB_SKIN]          = "مغير السكنات | SKIN CHANGER",
-        [LOC.TAB_BAN]           = "الحماية والأوتوميشن | ANTI-BAN & AUTO",
+        [LOC.MY_TAB]            = "👑 مانسي في آي بي | MANSY VIP 👑",
+        [LOC.TAB_AIMBOT]        = "🎯 التصويب التلقائي | AIMBOT",
+        [LOC.TAB_MEMORY]        = "⚡ تعديلات الذاكرة | MEMORY",
+        [LOC.TAB_SKIN]          = "✨ السكنات الفاخرة | SKINS",
+        [LOC.TAB_BAN]           = "🛡️ الحماية المتقدمة | BYPASS",
+        [LOC.BTN_CAR_FLY]       = "🛸 طيران السيارة | Car Fly",
+        [LOC.BTN_CAR_FLY_SPEED] = "🚀 سرعة الطيران | Fly Speed",
+        [LOC.BTN_FAST_CAR]      = "🏎️ تسريع المركبة | Super Speed Car",
+        [LOC.TITLE_SKIN]        = "🎨 تخصيص السكنات | SKIN CHANGER",
+
+        [LOC.BTN_ESP_ENABLE]    = "👁️ تفعيل الرادار | ESP Master",
+        [LOC.TITLE_ESP]         = "📡 كشف الأماكن المتطور | ESP SYSTEM",
+        [LOC.BTN_CHAMS_ENABLE]  = "🌈 تلوين اللاعبين | Chams Glow",
+        [LOC.BTN_ESP_LINES]     = "📏 خطوط التتبع | Snaplines",
+        [LOC.BTN_ESP_FOV_CIRCLE] = "⭕ دائرة الرؤية | FOV Circle",
+        [LOC.BTN_ESP_ARROWS]     = "🧭 أسهم المؤشر | 360° Arrows",
+        [LOC.BTN_ESP_BOX]        = "📦 صندوق الأعداء | Enemy Box ESP",
+        [LOC.BTN_CHAMS_VIS]     = "🎨 لون الواجهة | Front Chams (1R 2B 3G 4Y 5O 6P)",
+        [LOC.BTN_CHAMS_OCC]     = "🧱 خلف الجدار | Behind Wall (1R 2B 3G 4Y 5O 6P)",
+        [LOC.BTN_NEW_WALLHACK]  = "🧱 وول هاك حديث | PBC Wallhack",
+        [LOC.BTN_NEW_WH_VIS]    = "👁️ لون الرؤية | WH Visible (1G 2Lime 3O 4R 5B 6Gray 7Teal)",
+        [LOC.BTN_NEW_WH_OCC]    = "🛡️ لون خلف الساتر | WH Occluded (1G 2Lime 3O 4R 5B 6Gray 7Teal)",
+        [LOC.BTN_BLUE_FRAME]    = "🎯 إطار الرأس الذكي | Blue Head Frame",
+        [LOC.BTN_FAKE_HWID]     = "🔒 تزييف الهوية | Anti-Ban Fake HWID",
         
-        [LOC.TITLE_AIMING]      = "التوجيه الأساسي | Instant Auto-Aim",
-        [LOC.TITLE_SETTINGS]    = "تعديلات الذاكرة | Memory Exploits",
-        [LOC.TITLE_ESP]         = "كاشف الرادار والمجسمات | ESP & Visuals",
-        [LOC.TITLE_SKIN]        = "التحكم في المظاهر | Skin Changer Control",
-
-        -- Aimbot Section 1 & 2
-        [LOC.BTN_AIMBOT_ENABLE]     = "تفعيل الايمبوت | Aimbot Enable",
-        [LOC.BTN_AIMBOT_NORMAL]     = "ايمبوت دقيق فوري | Instant Auto-Aim",
-        [LOC.BTN_AIMBOT_FOV]        = "مجال الرؤية | Aimbot FOV",
-        [LOC.BTN_AIMBOT_DIST]       = "المسافة القصوى بالمتر | Max Distance",
-        [LOC.BTN_AIMBOT_SPEED]      = "سرعة وسلاسة التصويب | Aim Smooth Speed",
-        [LOC.BTN_AIMBOT_KNOCK]      = "تجاهل المصابين نوك | Ignore Knocked",
-        [LOC.BTN_AIMBOT_BOT]        = "تجاهل البوتات | Ignore Bots",
-        [LOC.BTN_AIMBOT_TARGET]     = "أولوية الهدف (1الأقرب 2الأقل دماً) | Target Priority",
-        [LOC.BTN_AIMBOT_WALL]       = "تصويب خلف الجدار | Through Wall Aim",
-        [LOC.BTN_AIMBOT_INSCOPE]    = "ايمبوت فتح السكوب (10-100م) | In-Scope Aim",
-        [LOC.BTN_AIMBOT_LONGRANGE]  = "ايمبوت مسافات بعيدة (+300م) | Long Range Aim",
-        [LOC.BTN_AIMBOT_BONE]       = "مكان التصويب | Target Bone",
-        [LOC.BTN_LOBBY_SKIN]        = "عرض سكن اللوبي | Show Lobby Skin",
-
-        -- Memory & Visual Hacks
-        [LOC.BTN_MEM_GRASS]         = "إزالة العشب بالكامل | Remove Grass",
-        [LOC.BTN_MEM_TREES]         = "إزالة الأشجار | Remove Trees",
-        [LOC.BTN_MEM_FOG]           = "إزالة الضباب والسحاب | Remove Fog",
-        [LOC.BTN_MEM_BLACKSKY]      = "السماء السوداء | Black Sky",
-        [LOC.BTN_MEM_FPS]           = "فتح الفريمات (165 FPS) | Unlock 165 FPS",
-        [LOC.BTN_MEM_IPAD]          = "منظور الآيباد واسع | iPad View",
-        [LOC.BTN_MEM_IPAD_FOV]      = "زاوية منظور الآيباد | iPad FOV",
-        [LOC.BTN_MEM_SMALLSCOPE]    = "تصغير السكوب (نمط آيباد) | Small Scope",
-        [LOC.BTN_MEM_SMALLSCOPE_FOV]= "زاوية تصغير السكوب | Small Scope FOV",
-        [LOC.BTN_MEM_CROSSHAIR]     = "مؤشر تصويب صغير | Small Crosshair",
-
-        -- ESP & Visuals
-        [LOC.BTN_ESP_ENABLE]        = "تشغيل كاشف الأماكن | Master ESP",
-        [LOC.BTN_CHAMS_ENABLE]      = "كاشف الجدار (شامز ملون) | Chams Wallhack",
-        [LOC.BTN_CHAMS_VIS]         = "لون الشامز الأمامي (1أحمر 2أزرق 3أخضر 4أصفر 5برتقالي 6بنفسجي) | Front Chams",
-        [LOC.BTN_CHAMS_OCC]         = "لون الشامز خلف الجدار (1أحمر 2أزرق 3أخضر 4أصفر 5برتقالي 6بنفسجي) | Wall Chams",
-        [LOC.BTN_NEW_WALLHACK]      = "كاشف الجدار المطور (PBC) | Advanced Wallhack",
-        [LOC.BTN_NEW_WH_VIS]        = "لون الجدار المرئي (1أخضر 2ليموني 3برتقالي 4أحمر 5أزرق 6رمادي 7تركواز) | Visible Color",
-        [LOC.BTN_NEW_WH_OCC]        = "لون الجدار المخفي (1أخضر 2ليموني 3برتقالي 4أحمر 5أزرق 6رمادي 7تركواز) | Hidden Color",
-        [LOC.BTN_BLUE_FRAME]        = "إطار الرأس الأزرق | Blue Frame ESP",
-        [LOC.BTN_ESP_LINES]         = "خطوط الليزر للأعداء | Laser Lines",
-        [LOC.BTN_ESP_FOV_CIRCLE]    = "دائرة مؤشر الايمبوت | FOV Circle",
-        [LOC.BTN_ESP_ARROWS]        = "أسهم تنبيه اتجاه الأعداء | Offscreen Arrows",
-        [LOC.BTN_ESP_BOX]           = "صندوق اللاعبين 2D | Player Box",
-        [LOC.BTN_FAKE_HWID]         = "حماية الهوية | Fake HWID (Anti-Ban)",
-
-        -- Protection & Automation
-        [LOC.BTN_CAR_FLY]           = "طيران السيارة بالبوق | Car Fly (Horn Control)",
-        [LOC.BTN_CAR_FLY_SPEED]     = "سرعة طيران السيارة | Car Fly Speed",
-        [LOC.BTN_FAST_CAR]          = "تسريع السيارة الخارق | Fast Car Speed",
-        [LOC.BTN_AUTO_REPORT]       = "بلاغ تلقائي على الأعداء | Auto Report Enemies",
-        [LOC.BTN_AUTO_REPORT_REASON]= "سبب البلاغ (1غش 2سرعة 3إساءة 4تخريب 5قتل فريق) | Report Reason",
-        [LOC.BTN_AUTO_REPORT_DELAY] = "تأخير إرسال البلاغ بالثواني | Report Delay (sec)",
-
-        -- Switcher state labels
-        [LOC.OPT_ON]                = "تشغيل | ON",
-        [LOC.OPT_OFF]               = "إيقاف | OFF",
+        [LOC.BTN_AIMBOT_ENABLE] = "🎯 تشغيل الإيم بوت | Enable Aimbot",
+        [LOC.BTN_AIMBOT_NORMAL] = "🕹️ إيم بوت ناعم | Smooth Aimbot",
+        [LOC.BTN_AIMBOT_FOV]    = "📐 زاوية التصويب | Aimbot FOV",
+        [LOC.BTN_AIMBOT_DIST]   = "📏 أقصى مسافة استهداف | Max Distance",
+        [LOC.BTN_AIMBOT_SPEED]  = "⚡ سرعة تتبع الإيم | Aim Smooth Speed",
+        [LOC.BTN_AIMBOT_KNOCK]  = "🚫 تجاهل المصابين النوك | Ignore Knocked",
+        [LOC.BTN_AIMBOT_BOT]    = "🤖 تجاهل البوتات | Ignore Bots",
+        [LOC.BTN_AIMBOT_TARGET] = "🎯 أولوية الهدف (1أقرب 2أقل دم) | Target Priority",
+        [LOC.BTN_AIMBOT_WALL]   = "🧱 تصويب خلف الجدار | Through Wall Aim",
+        [LOC.BTN_AIMBOT_INSCOPE] = "🔭 إيم بوت داخل السكوب | In-Scope Aimbot",
+        [LOC.BTN_AIMBOT_LONGRANGE] = "🏹 قناص المدى البعيد (300m+) | Long Range",
+        [LOC.BTN_AIMBOT_BONE]    = "💀 منطقة الاستهداف (رأس/صدر) | Target Bone",
+        [LOC.BTN_LOBBY_SKIN]     = "✨ إظهار سكنات اللوبي | Show Lobby Skins",
+        
+        [LOC.BTN_MEM_GRASS]     = "🌱 إزالة العشب | Remove Grass",
+        [LOC.BTN_MEM_TREES]     = "🌲 إزالة الأشجار | Remove Trees",
+        [LOC.BTN_MEM_FOG]       = "🌫️ إزالة الضباب | Clear Fog",
+        [LOC.BTN_MEM_BLACKSKY]  = "🌌 سماء ليلية سوداء | Black Sky",
+        [LOC.BTN_MEM_FPS]       = "⚡ فتح 165 إطار/ثانية | Unlock 165 FPS",
+        [LOC.BTN_MEM_IPAD]      = "📱 منظور الآيباد الواسع | iPad View",
+        [LOC.BTN_MEM_IPAD_FOV]  = "🔍 زاوية رؤية الآيباد | iPad FOV",
+        [LOC.BTN_MEM_SMALLSCOPE]     = "🔬 سكوب مصغر سينمائي | Small Scope",
+        [LOC.BTN_MEM_SMALLSCOPE_FOV] = "🔎 مقياس حجم السكوب | Small Scope FOV",
+        
+        [LOC.BTN_MEM_CROSSHAIR]  = "➕ نقطة تصويب دقيقة | Crosshair Dot",
+        
+        [LOC.BTN_AUTO_REPORT]    = "📢 بلاغ تلقائي على الأعداء | Auto Report",
+        [LOC.BTN_AUTO_REPORT_REASON] = "📝 سبب البلاغ (1غش 2هاك 3إساءة 4تخريب) | Report Reason",
+        [LOC.BTN_AUTO_REPORT_DELAY]  = "⏱️ الفاصل الزمني للبلاغ (ثواني) | Report Delay",
+        
+        [LOC.OPT_ON]            = "🟢 تفعيل | ON",
+        [LOC.OPT_OFF]           = "⚪ إيقاف | OFF",
+        
+        [LOC.TITLE_AIMING]      = "🎯 إعدادات التصويب | AIMBOT SETTINGS",
+        [LOC.TITLE_SETTINGS]    = "⚡ تخصيص المحرك والذاكرة | MEMORY HACKS",
     }
 
     _G.MemoryConfig = _G.MemoryConfig or {
@@ -9463,12 +9434,13 @@ _G.BRStartSkinLoop()
     end
 
     local function LOG(msg)
-        pcall(print, "[Zn Menu] " .. tostring(msg))
+        pcall(print, "[Mansy VIP Menu] " .. tostring(msg))
     end
 
-    LOG("Zn Menu v" .. MY_TAB_VER .. " loading...")
+    LOG("Mansy VIP Menu v" .. MY_TAB_VER .. " loading...")
 
     local function ApplyMemoryFeature(feature, state)
+        if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then return end
         pcall(function()
         local lsg = require("client.slua.logic.setting.logic_setting_graphics")
         local gi = lsg.GetGameInstance()
@@ -9665,7 +9637,7 @@ _G.BRStartSkinLoop()
             Key          = "MyTab_" .. key,
             UI           = SwitcherUI,
             Text         = textId,
-            SwitcherText = { "الرأس (Head)", "الصدر (Chest)", "الخصر (Pelvis)" },
+            SwitcherText = { "Head", "Chest", "Pelvis" },
             GetFunc = function(item)
             local index = getCb()
             if type(item) == "table" then item.CurrentIndex = index end
@@ -10022,7 +9994,7 @@ _G.BRStartSkinLoop()
                 end
             end
         ),
-        MakeSwitcher("auto_report", LOC.BTN_AUTO_REPORT,
+        MakeSwitcher("auto_report", "📢 بلاغ تلقائي على الأعداء | Auto Report",
             function() return (_G.AutoReportConfig and _G.AutoReportConfig.Enable) and 1 or 2 end,
             function(idx)
                 if not _G.AutoReportConfig then _G.AutoReportConfig = {} end
@@ -10034,22 +10006,22 @@ _G.BRStartSkinLoop()
                 end
             end
         ),
-        MakeSwitcher("auto_report_ss", "تصوير الفوز تلقائياً (#1) | Auto Screenshot",
+        MakeSwitcher("auto_report_ss", "📸 لقطة شاشة تلقائية عند الفوز #1 | Auto Screenshot",
             function() return (_G.AutoReportConfig and _G.AutoReportConfig.AutoScreenshot) and 1 or 2 end,
             function(idx) if _G.AutoReportConfig then _G.AutoReportConfig.AutoScreenshot = (idx == 1) end end
         ),
-        MakeSlider("auto_report_reason", LOC.BTN_AUTO_REPORT_REASON, 1, 5,
+        MakeSlider("auto_report_reason", "Report Reason (1Cheat 2Hack 3Abuse 4Grief 5TK)", 1, 5,
             function() return _G.AutoReportConfig and _G.AutoReportConfig.ReportReason or 1 end,
             function(val) if _G.AutoReportConfig then _G.AutoReportConfig.ReportReason = math.floor(val) end end
         ),
-        MakeSlider("auto_report_delay", LOC.BTN_AUTO_REPORT_DELAY, 1, 10,
+        MakeSlider("auto_report_delay", "Report Delay (sec)", 1, 10,
             function() return _G.AutoReportConfig and _G.AutoReportConfig.ReportDelay or 3 end,
             function(val) if _G.AutoReportConfig then _G.AutoReportConfig.ReportDelay = val end end
         ),
         }
 
         local tabSkinSection = {
-        MakeSwitcher("skin_mod", "تفعيل السكنات | MOD SKIN ON/OFF",
+        MakeSwitcher("skin_mod", "✨ تفعيل السكنات | MOD SKIN ON/OFF",
             function() return (_G.LexusConfig and _G.LexusConfig.ModSkin) and 1 or 2 end,
             function(idx)
                 if not _G.LexusConfig then _G.LexusConfig = {} end
@@ -10057,37 +10029,37 @@ _G.BRStartSkinLoop()
                 if _G.BRStartSkinLoop then _G.BRStartSkinLoop() end
             end
         ),
-        skinSlider("skin_suit", "سكن البدلة | Suit Skin", 1, 80, "SkinSuit", "OutfitSkins", "Suit"),
-        skinSlider("skin_bag", "سكن الحقيبة | Bag Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"),
-        skinSlider("skin_helmet", "سكن الخوذة | Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"),
-        skinSlider("skin_m416", "سكن M416 | M416 Skin", 1, 8, "SkinM416", "skinIdMappings", 101004),
-        skinSlider("skin_akm", "سكن AKM | AKM Skin", 1, 8, "SkinAKM", "skinIdMappings", 101001),
-        skinSlider("skin_scar", "سكن SCAR-L | SCAR-L Skin", 1, 8, "SkinSCAR", "skinIdMappings", 101003),
-        skinSlider("skin_m762", "سكن M762 | M762 Skin", 1, 8, "SkinM762", "skinIdMappings", 101008),
-        skinSlider("skin_aug", "سكن AUG | AUG Skin", 1, 7, "SkinAUG", "skinIdMappings", 101006),
-        skinSlider("skin_ump", "سكن UMP45 | UMP45 Skin", 1, 5, "SkinUMP", "skinIdMappings", 102002),
-        skinSlider("skin_uzi", "سكن UZI | UZI Skin", 1, 2, "SkinUZI", "skinIdMappings", 102001),
-        skinSlider("skin_groza", "سكن Groza | Groza Skin", 1, 2, "SkinGroza", "skinIdMappings", 101005),
-        skinSlider("skin_s12k", "سكن S12K | S12K Skin", 1, 2, "SkinS12K", "skinIdMappings", 104003),
-        skinSlider("skin_dbs", "سكن DBS | DBS Skin", 1, 3, "SkinDBS", "skinIdMappings", 104004),
-        skinSlider("skin_asm", "سكن ASM Gen8 | ASM Skin", 1, 2, "SkinASM", "skinIdMappings", 101101),
-        skinSlider("skin_qbz", "سكن QBZ | QBZ Skin", 1, 2, "SkinQBZ", "skinIdMappings", 101007),
-        skinSlider("skin_honey", "سكن هوني بادجر | Honey Badger", 1, 2, "SkinHoney", "skinIdMappings", 101012),
-        skinSlider("skin_m16a4", "سكن M16A4 | M16A4 Skin", 1, 2, "SkinM16A4", "skinIdMappings", 101002),
-        skinSlider("skin_ace32", "سكن ACE32 | ACE32 Skin", 1, 2, "SkinACE32", "skinIdMappings", 101102),
-        skinSlider("skin_kar98k", "سكن Kar98k | Kar98k Skin", 1, 2, "SkinKar98k", "skinIdMappings", 103001),
-        skinSlider("skin_m24", "سكن M24 | M24 Skin", 1, 2, "SkinM24", "skinIdMappings", 103002),
-        skinSlider("skin_awm", "سكن AWM | AWM Skin", 1, 2, "SkinAWM", "skinIdMappings", 103003),
-        skinSlider("skin_dacia", "سكن داسيا | Dacia Car Skin", 1, 34, "SkinDacia", "VehicleSkins", 1903001),
-        skinSlider("skin_uaz", "سكن جيب UAZ | UAZ Jeep Skin", 1, 16, "SkinUAZ", "VehicleSkins", 1908001),
-        skinSlider("skin_coupe", "سكن كوبيه | Coupe Car Skin", 1, 55, "SkinCoupe", "VehicleSkins", 1961001),
-        skinSlider("skin_buggy", "سكن باجي | Buggy Skin", 1, 11, "SkinBuggy", "VehicleSkins", 1907002),
-        skinSlider("skin_mirado", "سكن ميرادو | Mirado Skin", 1, 5, "SkinMirado", "VehicleSkins", 1915004),
-        MakeSwitcher("skin_deadbox", "سكن صندوق الموتى | DeadBox Skin",
+        skinSlider("skin_suit", "Suit Skin", 1, 80, "SkinSuit", "OutfitSkins", "Suit"),
+        skinSlider("skin_bag", "Bag Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"),
+        skinSlider("skin_helmet", "Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"),
+        skinSlider("skin_m416", "M416 Skin", 1, 8, "SkinM416", "skinIdMappings", 101004),
+        skinSlider("skin_akm", "AKM Skin", 1, 8, "SkinAKM", "skinIdMappings", 101001),
+        skinSlider("skin_scar", "SCAR Skin", 1, 8, "SkinSCAR", "skinIdMappings", 101003),
+        skinSlider("skin_m762", "M762 Skin", 1, 8, "SkinM762", "skinIdMappings", 101008),
+        skinSlider("skin_aug", "AUG Skin", 1, 7, "SkinAUG", "skinIdMappings", 101006),
+        skinSlider("skin_ump", "UMP Skin", 1, 5, "SkinUMP", "skinIdMappings", 102002),
+        skinSlider("skin_uzi", "UZI Skin", 1, 2, "SkinUZI", "skinIdMappings", 102001),
+        skinSlider("skin_groza", "Groza Skin", 1, 2, "SkinGroza", "skinIdMappings", 101005),
+        skinSlider("skin_s12k", "S12K Skin", 1, 2, "SkinS12K", "skinIdMappings", 104003),
+        skinSlider("skin_dbs", "DBS Skin", 1, 3, "SkinDBS", "skinIdMappings", 104004),
+        skinSlider("skin_asm", "ASM Gen8 Skin", 1, 2, "SkinASM", "skinIdMappings", 101101),
+        skinSlider("skin_qbz", "QBZ Skin", 1, 2, "SkinQBZ", "skinIdMappings", 101007),
+        skinSlider("skin_honey", "Honey Badger Skin", 1, 2, "SkinHoney", "skinIdMappings", 101012),
+        skinSlider("skin_m16a4", "M16A4 Skin", 1, 2, "SkinM16A4", "skinIdMappings", 101002),
+        skinSlider("skin_ace32", "ACE32 Skin", 1, 2, "SkinACE32", "skinIdMappings", 101102),
+        skinSlider("skin_kar98k", "Kar98k Skin", 1, 2, "SkinKar98k", "skinIdMappings", 103001),
+        skinSlider("skin_m24", "M24 Skin", 1, 2, "SkinM24", "skinIdMappings", 103002),
+        skinSlider("skin_awm", "AWM Skin", 1, 2, "SkinAWM", "skinIdMappings", 103003),
+        skinSlider("skin_dacia", "Dacia Skin", 1, 34, "SkinDacia", "VehicleSkins", 1903001),
+        skinSlider("skin_uaz", "UAZ Skin", 1, 16, "SkinUAZ", "VehicleSkins", 1908001),
+        skinSlider("skin_coupe", "Coupe Skin", 1, 55, "SkinCoupe", "VehicleSkins", 1961001),
+        skinSlider("skin_buggy", "Buggy Skin", 1, 11, "SkinBuggy", "VehicleSkins", 1907002),
+        skinSlider("skin_mirado", "Mirado Skin", 1, 5, "SkinMirado", "VehicleSkins", 1915004),
+        MakeSwitcher("skin_deadbox", "📦 سكن صندوق الموتى | DEADBOX SKINS",
             function() return (_G.LexusConfig and _G.LexusConfig.SkinDeadBox) and 1 or 2 end,
             function(idx) if not _G.LexusConfig then _G.LexusConfig = {} end _G.LexusConfig.SkinDeadBox = (idx == 1) end
         ),
-        MakeSwitcher("skin_attach", "سكن الملحقات كاملة | Attachment Skin",
+        MakeSwitcher("skin_attach", "🔩 ملحقات الأسلحة | ATTACHMENTS",
             function() return (_G.LexusConfig and _G.LexusConfig.SkinAttachment) and 1 or 2 end,
             function(idx) if not _G.LexusConfig then _G.LexusConfig = {} end _G.LexusConfig.SkinAttachment = (idx == 1) end
         )
@@ -10100,7 +10072,7 @@ _G.BRStartSkinLoop()
             UIKey = "Setting_Page_Game",
             Stack = MakeStack({
             { title = LOC.TITLE_AIMING,   items = tab1Section1 },
-            { title = "خيارات الايمبوت المتقدمة | Advanced Aim Settings", items = tab1Section2 },
+            { title = LOC.TITLE_SETTINGS, items = tab1Section2 },
             }),
         },
         {
@@ -10144,7 +10116,6 @@ _G.BRStartSkinLoop()
 
     local function InjectMyTab(catalog)
         if type(catalog) ~= "table" then return end
-        if _G.LunarLoginRuntime and not _G.LunarLoginRuntime.Authorized then return end
         if HasMyTab(catalog) then return end
         GetMyTabDefine()
         table.insert(catalog, 1, MY_TAB_DEFINE)
@@ -10188,6 +10159,11 @@ _G.BRStartSkinLoop()
         SettingMain.OnSelectTab_Page = function(self, ItemIndex)
         local pageData = self.AvailablePageList and self.AvailablePageList[ItemIndex]
         if pageData and pageData.Key == "MyTab" then
+            -- License Gate: verify authorization
+            if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
+                if _G.ShowMansyLogin then _G.ShowMansyLogin(true) end
+                return false
+            end
             if self._PageUI then
             pcall(function() self._PageUI:CloseSelf() end)
             self._PageUI = nil
@@ -10295,7 +10271,7 @@ _G.BRStartSkinLoop()
         end
     end
 
-    LOG("Zn Menu v" .. MY_TAB_VER .. " globally installed.")
+    LOG("Mansy VIP Menu v" .. MY_TAB_VER .. " globally installed.")
     end
 
     -- Auto-restart features that were enabled in previous match
@@ -10491,40 +10467,12 @@ _G.BRStartSkinLoop()
 
 end
 
--- Self Invoke (Starts Login System, gates cheats behind authorized key)
+-- Self Invoke (Script ko start karne ke liye)
 if not _G.guruSelfStarted then
     _G.guruSelfStarted = true
-    if _G.LunarLoginRuntime then
-        pcall(_G.LunarLoginRuntime.Update)
-        local function MansyLoginTick()
-            if _G.LunarLoginRuntime then
-                pcall(_G.LunarLoginRuntime.Update)
-            end
-        end
-        local okTicker, ticker = pcall(require, "common.time_ticker")
-        if okTicker and ticker and type(ticker.AddTimerLoop) == "function" then
-            ticker.AddTimerLoop(0, MansyLoginTick, -1, 0.5)
-        elseif _G.Game and type(_G.Game.AddGameTimer) == "function" then
-            _G.Game:AddGameTimer(0.5, true, MansyLoginTick)
-        else
-            local pc = nil
-            pcall(function()
-                local gs = import("GameplayStatics")
-                if gs and gs.GetPlayerController then pc = gs.GetPlayerController(nil, 0) end
-                if (not pc or not pc.AddGameTimer) and rawget(_G, "slua_GameFrontendHUD") then
-                    pc = _G.slua_GameFrontendHUD:GetPlayerController()
-                end
-            end)
-            if pc and type(pc.AddGameTimer) == "function" then
-                pc:AddGameTimer(0.5, true, MansyLoginTick)
-            end
-        end
-    end
-    if _G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized then
-        if type(_G.StartAdvancedSystems) == "function" and not _G.AdvancedSystemsStarted then
-            _G.AdvancedSystemsStarted = true
-            pcall(_G.StartAdvancedSystems)
-        end
+    if type(_G.StartAdvancedSystems) == "function" then
+        local ok, err = pcall(_G.StartAdvancedSystems)
+        if not ok then print("[Mansy VIP] start error:", tostring(err)) end
     end
 end
 
@@ -10539,8 +10487,8 @@ pcall(function()
             if self.UIRoot and self.UIRoot.TextBlock_quality then
                 local _FSlateColor = import("SlateColor") or import("/Script/SlateCore.SlateColor")
                 local _FLinearColor = import("LinearColor")
-                self.UIRoot.TextBlock_quality:SetText("  ♕ MANSY GAMING VIP | مانسي ♕  ")
-                self.UIRoot.TextBlock_quality:SetColorAndOpacity(_FSlateColor(_FLinearColor(1, 1, 0, 1)))
+                self.UIRoot.TextBlock_quality:SetText("  👑 MANSY GAMING VIP 👑  ")
+                self.UIRoot.TextBlock_quality:SetColorAndOpacity(_FSlateColor(_FLinearColor(1.0, 0.84, 0.0, 1.0)))
             end
         end
     end
