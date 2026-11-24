@@ -1214,17 +1214,12 @@ end)()
                 w:SetRenderTransformPivot(vector(.5,.5));w:SetRenderAngle(angle)
             end
             local slate=import("SlateColor")
-            local fontObject
-            if slua and type(slua.loadObject)=="function" then
-                local loaded,obj=pcall(slua.loadObject,"/Engine/EngineFonts/Roboto.Roboto")
-                if loaded and valid(obj) then fontObject=obj end
-            end
             local function style(w,size,c,bold)
                 local font=member(w,"Font")
                 if font then
                     if type(font)=="table" then local copy={};for k,v in pairs(font) do copy[k]=v end;font=copy end
                     font.Size=size
-                    if fontObject then font.FontObject=fontObject;font.TypefaceFontName=bold and "Bold" or "Regular" end
+                    if bold then font.TypefaceFontName="Bold" end
                     if font.OutlineSettings then
                         local outline=font.OutlineSettings
                         if type(outline)=="table" then local copy={};for k,v in pairs(outline) do copy[k]=v end;outline=copy end
@@ -1242,74 +1237,66 @@ end)()
                 if center then pcall(function() w:SetJustification(1) end) end
                 return w
             end
-            -- Ultra-Premium Cyber Obsidian & Neon Cyan VIP Theme
+            -- Ultra-Clean Modern Cyber Card VIP Theme (High-Precision Geometry)
             local neon_cyan={{0,180,255},{0,230,255},{0,180,255}}
-            local neon_bright={{100,220,255},{180,245,255},{100,220,255}}
-            local neon_edge={{0,90,160},{0,130,210},{0,90,160}}
-            local body_glass={{12,16,26},{16,22,34},{12,16,26}}
-            local header_dark={{18,24,38},{26,34,52},{18,24,38}}
-            local border_glow={{0,160,240},{0,220,255},{0,160,240}}
+            local neon_bright={{120,225,255},{200,250,255},{120,225,255}}
             local cyan_solid=color(0,215,255,255)
             local white=color(255,255,255,255)
-            local silver=color(160,185,220,255)
-            local muted=color(110,135,170,255)
-            local input_bg=color(10,14,24,240)
+            local silver=color(175,195,225,255)
+            local muted=color(125,145,175,255)
+            local card_bg=color(14,18,28,250)
+            local header_bg=color(20,28,44,255)
+            local input_bg=color(10,14,24,255)
+            local btn_outer={{0,180,255},{0,240,255},{0,180,255}}
+            local btn_inner={{0,120,230},{0,170,255},{0,120,230}}
 
-            -- Perimeter & Body: Deep Obsidian Dark Glass
-            panel(6,6,W-12,H-12,10,body_glass,2,24,.92)
-            rail(13,0,W-26,4,border_glow,3,24)
-            rail(13,H-4,W-26,4,border_glow,3,24)
-            rect(0,13,4,H-26,cyan_solid,3)
-            rect(W-4,13,4,H-26,cyan_solid,3)
-            rail(13,1,W-26,1.5,neon_bright,3,24)
-            rail(13,H-2.5,W-26,1.5,neon_edge,3,24)
-            rect(1,13,1.5,H-26,cyan_solid,3)
-            rect(W-2.5,13,1.5,H-26,cyan_solid,3)
-            for _,s in ipairs({{1,13,13,1},{1,H-13,13,H-1}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
-            for _,s in ipairs({{W-13,1,W-1,13},{W-13,H-1,W-1,H-13}}) do line(s[1],s[2],s[3],s[4],2,cyan_solid,3) end
+            -- 1. Outer Frame & Background (Crisp 2px clean border without jagged lines)
+            rect(2, 2, W-4, H-4, card_bg, 2)
+            rect(0, 0, W, 2, cyan_solid, 3)
+            rect(0, H-2, W, 2, cyan_solid, 3)
+            rect(0, 0, 2, H, cyan_solid, 3)
+            rect(W-2, 0, 2, H, cyan_solid, 3)
 
-            -- Header Container
-            panel(10,10,W-20,65,14,border_glow,4,24,1)
-            panel(12,12,W-24,61,12,header_dark,5,32,1)
-            line(16,73,W-16,73,1.5,cyan_solid,6)
+            -- 2. Sleek Header Banner
+            rect(2, 2, W-4, 58, header_bg, 3)
+            rail(2, 59, W-4, 2, neon_cyan, 4, 12)
 
             if welcome then
-                d.Title=text("👑 MANSY GAMING VIP 👑",24,20,W-48,42,20,white,7,true,true)
-                local pw=math.min(360,W-60);local px=(W-pw)/2
-                panel(px,96,pw,53,12,border_glow,4,16)
-                panel(px+2,98,pw-4,49,10,header_dark,5,20)
-                d.Detail=text("✦ VIP STATUS: ACTIVE ✦",px+16,106,pw-32,24,17,cyan_solid,7,true,true)
-                d.Hint=text("🛡️ Safe Mode Active • Play Smart & Safe",24,163,W-48,32,15,silver,7,true,true)
+                d.Title=text("MANSY GAMING VIP", 10, 10, W-20, 26, 20, white, 7, true, true)
+                text("مرحباً بك في النسخة الخاصة | Welcome Back", 10, 36, W-20, 18, 12, cyan_solid, 7, false, true)
+
+                local pw=math.min(340, W-60); local px=(W-pw)/2; local py=88
+                rect(px, py, pw, 46, cyan_solid, 4)
+                rect(px+1.5, py+1.5, pw-3, 43, color(18, 26, 42, 255), 5)
+                rail(px+2, py+2, pw-4, 2, neon_bright, 6, 8)
+                d.Detail=text("VIP Status: ACTIVE [ مـفـعّـل ]", px+10, py+11, pw-20, 24, 16, cyan_solid, 7, true, true)
+
+                d.Hint=text("نظام الحماية نشط • العب بأمان وبدون لفت الانتباه | Safe Mode", 15, 148, W-30, 22, 12, silver, 7, false, true)
             else
-                d.Title=text("👑 MANSY GAMING 👑",22,15,W-44,31,23,white,7,true,true)
-                text("✦ VIP AUTHENTICATION ✦",22,45,W-44,21,13,cyan_solid,7,true,true)
-                line(W/2-118,56,W/2-47,56,1,cyan_solid,7)
-                line(W/2+47,56,W/2+118,56,1,cyan_solid,7)
-                text("🔑 VIP LICENSE KEY",22,82,W-44,20,13,silver,7,true,false)
-                rail(27,104,W-54,2,border_glow,4,24)
-                rail(27,143,W-54,2,border_glow,4,24)
-                rect(20,111,2,27,cyan_solid,4)
-                rect(W-22,111,2,27,cyan_solid,4)
-                line(20,111,27,104,2,cyan_solid,4)
-                line(W-27,104,W-20,111,2,cyan_solid,4)
-                line(20,138,27,145,2,cyan_solid,4)
-                line(W-27,145,W-20,138,2,cyan_solid,4)
-                d.Input=make("EditableTextBox",d.Container)
+                d.Title=text("MANSY GAMING VIP", 10, 10, W-20, 26, 20, white, 7, true, true)
+                text("تسجيل الدخول والترخيص | VIP License Access", 10, 36, W-20, 18, 12, cyan_solid, 7, false, true)
+
+                text("مفتاح الاشتراك | LICENSE KEY", 26, 74, W-52, 18, 12, silver, 7, true, false)
+
+                local ix=22; local iy=94; local iw=W-44; local ih=38
+                rect(ix, iy, iw, ih, cyan_solid, 4)
+                rect(ix+1.5, iy+1.5, iw-3, ih-3, input_bg, 5)
+
+                d.Input=make("EditableTextBox", d.Container)
                 d.Input:SetText(key or "")
-                local fg=white;local bg=input_bg
-                local inputStyle=member(d.Input,"WidgetStyle")
+                local fg=white; local bg=input_bg
+                local inputStyle=member(d.Input, "WidgetStyle")
                 if inputStyle then
                     if type(inputStyle)=="table" then local copy={};for k,v in pairs(inputStyle) do copy[k]=v end;inputStyle=copy end
-                    local inputFont=member(inputStyle,"Font")
+                    local inputFont=member(inputStyle, "Font")
                     if inputFont then
                         if type(inputFont)=="table" then local copy={};for k,v in pairs(inputFont) do copy[k]=v end;inputFont=copy end
-                        inputFont.Size=17
-                        if fontObject then inputFont.FontObject=fontObject;inputFont.TypefaceFontName="Regular" end
+                        inputFont.Size=16
                         inputStyle.Font=inputFont
                     end
                     inputStyle.ForegroundColor=slate(fg);inputStyle.ReadOnlyForegroundColor=slate(fg)
                     for _,name in ipairs({"BackgroundImageNormal","BackgroundImageHovered","BackgroundImageFocused","BackgroundImageReadOnly"}) do
-                        local brush=member(inputStyle,name)
+                        local brush=member(inputStyle, name)
                         if brush then
                             if type(brush)=="table" then local copy={};for k,v in pairs(brush) do copy[k]=v end;brush=copy end
                             brush.TintColor=slate(bg);inputStyle[name]=brush
@@ -1317,35 +1304,37 @@ end)()
                     end
                     d.Input.WidgetStyle=inputStyle
                 else
-                    local inputFont=member(d.Input,"Font")
+                    local inputFont=member(d.Input, "Font")
                     if inputFont then
                         if type(inputFont)=="table" then local copy={};for k,v in pairs(inputFont) do copy[k]=v end;inputFont=copy end
-                        inputFont.Size=17;d.Input.Font=inputFont
+                        inputFont.Size=16;d.Input.Font=inputFont
                     end
                     d.Input.ForegroundColor=fg;d.Input.BackgroundColor=bg
                 end
-                local setForeground=member(d.Input,"SetForegroundColor")
-                if type(setForeground)=="function" then setForeground(d.Input,fg) end
-                pcall(function() d.Input:SetHintText("Enter your VIP Key...") end)
-                visibility(d.Input,enums.Visible);add(d.Input,23,107,W-46,35,8,true)
-                d.Hint=text("🔒 Key is automatically saved locally",22,149,W-44,19,11,muted,7,false,false)
-                d.Status=text(status or "Ready to activate VIP",22,170,W-44,23,12,cyan_solid,8,false,false,true)
+                local setForeground=member(d.Input, "SetForegroundColor")
+                if type(setForeground)=="function" then setForeground(d.Input, fg) end
+                pcall(function() d.Input:SetHintText("Enter your VIP Key / أدخل المفتاح...") end)
+                visibility(d.Input, enums.Visible); add(d.Input, ix+8, iy+2, iw-16, ih-4, 8, true)
+
+                d.Hint=text("يتم حفظ المفتاح تلقائياً | Key is saved automatically", 26, 138, W-52, 18, 11, muted, 7, false, false)
+                d.Status=text(status or "أدخل المفتاح لتفعيل VIP | Ready to activate", 26, 158, W-52, 22, 12, cyan_solid, 8, false, false, true)
             end
-            local button=make("Button",d.Container);d.Button=button
-            local by=welcome and 212 or 201;local bh=welcome and 42 or 34
-            local bw=welcome and 220 or 200;local bx=(W-bw)/2
-            local btn_outer={{0,180,255},{0,240,255},{0,180,255}}
-            local btn_inner={{0,120,230},{0,170,255},{0,120,230}}
-            panel(bx-3,by-3,bw+6,bh+6,8,btn_outer,4,16)
-            panel(bx,by,bw,bh,7,btn_inner,5,16)
+
+            local button=make("Button", d.Container); d.Button=button
+            local by=welcome and 195 or 190; local bh=welcome and 40 or 36
+            local bw=math.min(260, W-80); local bx=(W-bw)/2
+            rect(bx-2, by-2, bw+4, bh+4, cyan_solid, 5)
+            rail(bx, by, bw, bh, btn_inner, 6, 12)
+            rail(bx, by, bw, 2, neon_bright, 7, 8)
             pcall(function() button:SetBackgroundColor(color(255,255,255,0)) end)
-            visibility(button,enums.Visible)
-            local label=make("TextBlock",button)
-            label:SetText(welcome and "✦ CONTINUE TO GAME ✦" or "⚡ ACTIVATE VIP ⚡")
-            style(label,16,white,true);visibility(label,passive)
+            visibility(button, enums.Visible)
+            local label=make("TextBlock", button)
+            label:SetText(welcome and "متابعة إلى اللعبة | CONTINUE" or "تفعيل ودخول | LOGIN VIP")
+            style(label, 15, white, true); visibility(label, passive)
             local labelSlot=button:AddChild(label)
             pcall(function() labelSlot:SetHorizontalAlignment(2);labelSlot:SetVerticalAlignment(2) end)
-            add(button,bx,by,bw,bh,9,true)
+            add(button, bx, by, bw, bh, 9, true)
+
             d.Event=button.OnClicked
             d.Handle=d.Event:Add(function()
                 if not d.Visible or d.Busy then return end
@@ -1357,7 +1346,7 @@ end)()
                 local okRead,k=pcall(function() return d.Input:GetText() end)
                 if not okRead or type(k)~="string" then return end
                 k=k:match("^%s*(.-)%s*$")
-                if #k==0 or #k>512 then d.Status:SetText("Enter a valid key");return end
+                if #k==0 or #k>512 then d.Status:SetText("أدخل مفتاح صالح | Enter valid key");return end
                 if d.Submit then d.Submit(k) end
             end)
             renderArt()
@@ -1853,9 +1842,9 @@ do
     local function featureState() return _G.LunarFeatures end
     local function value(c,v) if v==nil then return c end return v end
     local function espAll(version)
-        return {Key="LunarV"..version.."_All",UI=AliasMap.Switcher,Text="⚡ Master ESP [V"..version.."]",
+        return {Key="LunarV"..version.."_All",UI=AliasMap.Switcher,Text="تفعيل الكل | Master ESP [V"..version.."]",
             LunarBulk=true,
-            SwitcherText={"[ON] Enable All","[OFF] Disable All"},
+            SwitcherText={"تشغيل الكل","إيقاف الكل"},
             EventType=F.ESPSettingsEventType,EventID=F.ESPSettingsEventID,
             GetFunc=function() return featureState().GetESPAll(version) end,
             SetFunc=function(c,v) return featureState().SetESPAll(version,value(c,v)) end}
@@ -1871,32 +1860,41 @@ do
             SetFunc=function(c,v) return featureState().SetESP(version,key,value(c,v)) end}
     end
     local V1={espAll(1)}
-    for _,entry in ipairs({{"Name","👤 Player Name"},{"Line","📏 SnapLines"},{"Health","❤️ Health Bar"},{"Distance","📍 Distance Meter"},{"EnemyCounter","🔢 Radar Counter"}}) do
+    for _,entry in ipairs({
+        {"Name","اسم اللاعب | Player Name"},
+        {"Line","خطوط الكاشف | SnapLines"},
+        {"Health","شريط الدم | Health Bar"},
+        {"Distance","المسافة بالمتر | Distance"},
+        {"EnemyCounter","عدّاد الأعداء | Radar Counter"}
+    }) do
         V1[#V1+1]=espSwitch(1,entry[1],entry[2])
     end
     local V2={espAll(2),
-        espSwitch(2,"Name","👤 Player Name [V2]"),espSwitch(2,"Line","📏 Laser SnapLines"),espSwitch(2,"Box","📦 2D Box ESP"),
-        espSwitch(2,"Health","❤️ Dynamic Health Bar"),espSwitch(2,"Distance","📍 Distance (Meters)"),espSwitch(2,"Skeleton","🦴 Skeleton Bone ESP"),espSwitch(2,"Counter","⚠️ Nearby Enemies Alert")}
+        espSwitch(2,"Name","اسم اللاعب | Player Name"),
+        espSwitch(2,"Line","خط ليزر | Laser Lines"),
+        espSwitch(2,"Box","صندوق 2D | Player Box"),
+        espSwitch(2,"Health","شريط الدم | Dynamic Health"),
+        espSwitch(2,"Distance","المسافة بالمتر | Distance Meter"),
+        espSwitch(2,"Skeleton","هيكل عظمي | Skeleton Bones"),
+        espSwitch(2,"Counter","تنبيه اقتراب الأعداء | Enemy Alert")}
     local Other={
-        {Key="LunarWall",UI=AliasMap.Switcher,Text="👁️ Chams Wallhack (X-Ray)",ExpandIndex=0,EventType=F.ESPSettingsEventType,EventID=3,GetFunc=function() return featureState().Settings.WallEnabled end,
+        {Key="LunarWall",UI=AliasMap.Switcher,Text="كاشف الجدار (شامز) | Chams Wallhack",ExpandIndex=0,EventType=F.ESPSettingsEventType,EventID=3,GetFunc=function() return featureState().Settings.WallEnabled end,
             SetFunc=function(c,v) featureState().SetWall(value(c,v));return true end},
-        {Key="LunarIpad",UI=AliasMap.Switcher,Text="📱 iPad Wide View (FPP/TPP)",ExpandIndex=0,GetFunc=function() return _G.LexusConfig.IpadView end,
+        {Key="LunarIpad",UI=AliasMap.Switcher,Text="منظور الآيباد واسع | iPad View",ExpandIndex=0,GetFunc=function() return _G.LexusConfig.IpadView end,
             SetFunc=function(c,v) featureState().SetIpad(value(c,v));return true end},
-        {Key="LunarModSkin",UI=AliasMap.Switcher,Text="👑 Unlock Weapon & Outfit Skins",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.ModSkin end,
+        {Key="LunarModSkin",UI=AliasMap.Switcher,Text="تفعيل السكنات | Enable Skins",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.ModSkin end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.ModSkin=value(c,v);return true end},
-        {Key="LunarSkinDeadBox",UI=AliasMap.Switcher,Text="⚰️ Custom Loot/DeadBox Skin",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinDeadBox end,
+        {Key="LunarSkinDeadBox",UI=AliasMap.Switcher,Text="سكن صندوق الموتى | DeadBox Skin",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinDeadBox end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.SkinDeadBox=value(c,v);return true end},
-        {Key="LunarSkinAttachment",UI=AliasMap.Switcher,Text="✨ Max Weapon Attachments",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinAttachment end,
+        {Key="LunarSkinAttachment",UI=AliasMap.Switcher,Text="سكن الملحقات كاملة | Max Attachments",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinAttachment end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.SkinAttachment=value(c,v);return true end},
-        {Key="LunarKillMessage",UI=AliasMap.Switcher,Text="📢 VIP Kill Broadcast",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.KillMessage end,
+        {Key="LunarKillMessage",UI=AliasMap.Switcher,Text="إشعار القتل المميز | Kill Broadcast",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.KillMessage end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.KillMessage=value(c,v);return true end},
-        {Key="LunarModEmote",UI=AliasMap.Switcher,Text="🕺 Unlock All VIP Emotes",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.ModEmote end,
+        {Key="LunarModEmote",UI=AliasMap.Switcher,Text="فتح جميع الرقصات | Unlock Emotes",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.ModEmote end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.ModEmote=value(c,v);return true end},
-        {Key="LunarSanhVip",UI=AliasMap.Switcher,Text="🚗 VIP Lobby Showcase Vehicle",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SanhSieuXeVip end,
+        {Key="LunarSanhVip",UI=AliasMap.Switcher,Text="سيارة اللوبي VIP | Lobby Supercar",ExpandIndex=0,GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SanhSieuXeVip end,
             SetFunc=function(c,v) if not _G.LexusConfig then _G.LexusConfig={} end; _G.LexusConfig.SanhSieuXeVip=value(c,v);return true end},
     }
-    -- Verified native settings item contract: absolute Min/Max values, native
-    -- key/value callbacks, and expansion events owned by the game's page.
     local function rangeItem(key,label,lo,hi,parent,get,set)
         return {Key=key,UI=AliasMap.Slider,Text=label,Min=lo,Max=hi,ExpandHandle=parent,
             GetFunc=function() return get() end,
@@ -1907,15 +1905,15 @@ do
             end}
     end
     if sliderReady then
-        table.insert(Other,3,rangeItem("LunarIpadFOV","🔍 iPad FOV Range",90,120,"LunarIpad",
+        table.insert(Other,3,rangeItem("LunarIpadFOV","مسافة منظور الآيباد | iPad FOV Range",90,120,"LunarIpad",
             function() return featureState().Settings.IpadFOV end,"SetIpadFOV"))
     end
 
-    Other[#Other+1]={Key="LunarMortarAim",UI=AliasMap.Switcher,Text="🎯 Mortar Cannon Aim",
+    Other[#Other+1]={Key="LunarMortarAim",UI=AliasMap.Switcher,Text="تصويب الهاون | Mortar Cannon Aim",
         GetFunc=function() return featureState().Settings.MortarEnabled end,
         SetFunc=function(c,v) featureState().SetMortar(value(c,v));return true end}
-    local names={"Pink","White","Cyan","Green","Yellow","Saffron","Red"}
-    for i,entry in ipairs({{"WallVisible","🟢 Chams Visible Color"},{"WallOccluded","🔴 Behind-Wall Color"}}) do
+    local names={"وردي","أبيض","سماوي","أخضر","أصفر","برتقالي","أحمر"}
+    for i,entry in ipairs({{"WallVisible","لون العدو المكشوف | Visible Color"},{"WallOccluded","لون العدو خلف الجدار | Hidden Color"}}) do
         local key,label=entry[1],entry[2]
         table.insert(Other,1+i,{Key="Lunar"..key,UI=AliasMap.CompactSwitcher or AliasMap.Switcher,Text=label,
             EventType=F.ESPSettingsEventType,EventID=3,
@@ -1924,7 +1922,7 @@ do
             SetFunc=function(c,v) return featureState().SetWallColor(key,value(c,v)) end})
     end
     local Skins = {
-        {Key="LunarModSkin",UI=AliasMap.Switcher,Text="👑 Enable Custom Skins",ExpandIndex=0,
+        {Key="LunarModSkin",UI=AliasMap.Switcher,Text="تفعيل السكنات | Enable Skins",ExpandIndex=0,
             GetFunc=function() return _G.LexusConfig and _G.LexusConfig.ModSkin end,
             SetFunc=function(c,v)
                 if not _G.LexusConfig then _G.LexusConfig={} end
@@ -1932,21 +1930,21 @@ do
                 if _G.BRStartSkinLoop then _G.BRStartSkinLoop() end
                 return true
             end},
-        {Key="LunarSkinDeadBox",UI=AliasMap.Switcher,Text="⚰️ Custom Loot/DeadBox Skin",ExpandIndex=0,
+        {Key="LunarSkinDeadBox",UI=AliasMap.Switcher,Text="سكن صندوق الموتى | DeadBox Skin",ExpandIndex=0,
             GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinDeadBox end,
             SetFunc=function(c,v)
                 if not _G.LexusConfig then _G.LexusConfig={} end
                 _G.LexusConfig.SkinDeadBox=value(c,v)
                 return true
             end},
-        {Key="LunarSkinAttachment",UI=AliasMap.Switcher,Text="✨ Max Weapon Attachments",ExpandIndex=0,
+        {Key="LunarSkinAttachment",UI=AliasMap.Switcher,Text="سكن الملحقات كاملة | Max Attachments",ExpandIndex=0,
             GetFunc=function() return _G.LexusConfig and _G.LexusConfig.SkinAttachment end,
             SetFunc=function(c,v)
                 if not _G.LexusConfig then _G.LexusConfig={} end
                 _G.LexusConfig.SkinAttachment=value(c,v)
                 return true
             end},
-        {Key="LunarKillMessage",UI=AliasMap.Switcher,Text="📢 VIP Kill Message Broadcast",ExpandIndex=0,
+        {Key="LunarKillMessage",UI=AliasMap.Switcher,Text="إشعار القتل المميز | Kill Broadcast",ExpandIndex=0,
             GetFunc=function() return _G.LexusConfig and _G.LexusConfig.KillMessage end,
             SetFunc=function(c,v)
                 if not _G.LexusConfig then _G.LexusConfig={} end
@@ -1992,39 +1990,39 @@ do
             }
         end
         local skinSlidersDef = {
-            {"skin_suit", "👕 Character Suit / Outfit", 1, 80, "SkinSuit", "OutfitSkins", "Suit"},
-            {"skin_bag", "🎒 Backpack Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"},
-            {"skin_helmet", "🪖 Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"},
-            {"skin_m416", "🔫 M416 Glacier / Upgrade", 1, 8, "SkinM416", "skinIdMappings", 101004},
-            {"skin_akm", "🔫 AKM Hellfire / Dragon", 1, 8, "SkinAKM", "skinIdMappings", 101001},
-            {"skin_scar", "🔫 SCAR-L Operation Tomorrow", 1, 8, "SkinSCAR", "skinIdMappings", 101003},
-            {"skin_m762", "🔫 Beryl M762 Deadly Precision", 1, 8, "SkinM762", "skinIdMappings", 101008},
-            {"skin_aug", "🔫 AUG A3 Cyber Assassin", 1, 7, "SkinAUG", "skinIdMappings", 101006},
-            {"skin_ump", "🔫 UMP45 Frost / Platinum", 1, 5, "SkinUMP", "skinIdMappings", 102002},
-            {"skin_uzi", "🔫 Micro UZI Romantic", 1, 2, "SkinUZI", "skinIdMappings", 102001},
-            {"skin_groza", "🔫 Groza Event Horizon", 1, 2, "SkinGroza", "skinIdMappings", 101005},
-            {"skin_s12k", "🔫 S12K Shotgun Edition", 1, 2, "SkinS12K", "skinIdMappings", 104003},
-            {"skin_dbs", "🔫 DBS High Power", 1, 3, "SkinDBS", "skinIdMappings", 104004},
-            {"skin_asm", "🔫 ASM Abakan Gen8", 1, 2, "SkinASM", "skinIdMappings", 101101},
-            {"skin_qbz", "🔫 QBZ Fatal Strike", 1, 2, "SkinQBZ", "skinIdMappings", 101007},
-            {"skin_honey", "🔫 Honey Badger Neon", 1, 2, "SkinHoney", "skinIdMappings", 101012},
-            {"skin_m16a4", "🔫 M16A4 Aurora Wave", 1, 2, "SkinM16A4", "skinIdMappings", 101002},
-            {"skin_ace32", "🔫 ACE32 Hyper Drive", 1, 2, "SkinACE32", "skinIdMappings", 101102},
-            {"skin_kar98k", "🎯 Kar98k Dragon Slayer", 1, 2, "SkinKar98k", "skinIdMappings", 103001},
-            {"skin_m24", "🎯 M24 Pharaoh's Might", 1, 2, "SkinM24", "skinIdMappings", 103002},
-            {"skin_awm", "🎯 AWM Godzilla / Rainbow", 1, 2, "SkinAWM", "skinIdMappings", 103003},
-            {"skin_dacia", "🏎️ Dacia Sports Car", 1, 34, "SkinDacia", "VehicleSkins", 1903001},
-            {"skin_uaz", "🚙 UAZ Armored Monster", 1, 16, "SkinUAZ", "VehicleSkins", 1908001},
-            {"skin_coupe", "🏎️ Coupe RB Supercar", 1, 55, "SkinCoupe", "VehicleSkins", 1961001},
-            {"skin_buggy", "🏎️ Buggy Off-Road Beast", 1, 11, "SkinBuggy", "VehicleSkins", 1907002},
-            {"skin_mirado", "🏎️ Mirado Golden Muscle", 1, 5, "SkinMirado", "VehicleSkins", 1915004},
+            {"skin_suit", "سكن البدلات والملابس | Suit Skin", 1, 80, "SkinSuit", "OutfitSkins", "Suit"},
+            {"skin_bag", "سكن الحقيبة | Backpack Skin", 1, 15, "SkinBag", "OutfitSkins", "Bag"},
+            {"skin_helmet", "سكن الخوذة | Helmet Skin", 1, 11, "SkinHelmet", "OutfitSkins", "Helmet"},
+            {"skin_m416", "سكن M416 (ثلجي / جوكر)", 1, 8, "SkinM416", "skinIdMappings", 101004},
+            {"skin_akm", "سكن AKM (حفرية / تنين)", 1, 8, "SkinAKM", "skinIdMappings", 101001},
+            {"skin_scar", "سكن SCAR-L (اليقطين)", 1, 8, "SkinSCAR", "skinIdMappings", 101003},
+            {"skin_m762", "سكن بيزل Beryl M762", 1, 8, "SkinM762", "skinIdMappings", 101008},
+            {"skin_aug", "سكن AUG A3", 1, 7, "SkinAUG", "skinIdMappings", 101006},
+            {"skin_ump", "سكن UMP45", 1, 5, "SkinUMP", "skinIdMappings", 102002},
+            {"skin_uzi", "سكن يوزي Micro UZI", 1, 2, "SkinUZI", "skinIdMappings", 102001},
+            {"skin_groza", "سكن جروزا Groza", 1, 2, "SkinGroza", "skinIdMappings", 101005},
+            {"skin_s12k", "سكن شوتجان S12K", 1, 2, "SkinS12K", "skinIdMappings", 104003},
+            {"skin_dbs", "سكن شوتجان DBS", 1, 3, "SkinDBS", "skinIdMappings", 104004},
+            {"skin_asm", "سكن ASM Abakan", 1, 2, "SkinASM", "skinIdMappings", 101101},
+            {"skin_qbz", "سكن QBZ", 1, 2, "SkinQBZ", "skinIdMappings", 101007},
+            {"skin_honey", "سكن Honey Badger", 1, 2, "SkinHoney", "skinIdMappings", 101012},
+            {"skin_m16a4", "سكن M16A4", 1, 2, "SkinM16A4", "skinIdMappings", 101002},
+            {"skin_ace32", "سكن ACE32", 1, 2, "SkinACE32", "skinIdMappings", 101102},
+            {"skin_kar98k", "سكن قناصة Kar98k", 1, 2, "SkinKar98k", "skinIdMappings", 103001},
+            {"skin_m24", "سكن قناصة M24", 1, 2, "SkinM24", "skinIdMappings", 103002},
+            {"skin_awm", "سكن قناصة AWM (قوس قزح)", 1, 2, "SkinAWM", "skinIdMappings", 103003},
+            {"skin_dacia", "سكن سيارة داسيا Dacia", 1, 34, "SkinDacia", "VehicleSkins", 1903001},
+            {"skin_uaz", "سكن سيارة جيب UAZ", 1, 16, "SkinUAZ", "VehicleSkins", 1908001},
+            {"skin_coupe", "سكن سيارة كوبيه Coupe RB", 1, 55, "SkinCoupe", "VehicleSkins", 1961001},
+            {"skin_buggy", "سكن سيارة باجي Buggy", 1, 11, "SkinBuggy", "VehicleSkins", 1907002},
+            {"skin_mirado", "سكن سيارة ميرادو Mirado", 1, 5, "SkinMirado", "VehicleSkins", 1915004},
         }
         for _, s in ipairs(skinSlidersDef) do
             Skins[#Skins + 1] = skinSlider(s[1], s[2], s[3], s[4], s[5], s[6], s[7])
         end
     end
     local AimbotStack = {
-        {Key="LunarAimEnable", UI=AliasMap.Switcher, Text="🎯 Aimbot Master Switch",
+        {Key="LunarAimEnable", UI=AliasMap.Switcher, Text="تفعيل الايمبوت | Aimbot ON/OFF",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.Enable) end,
             SetFunc=function(c,v)
                 local on = value(c,v)
@@ -2033,7 +2031,7 @@ do
                 featureState().SetAim(on)
                 return true
             end},
-        {Key="LunarAimNormal", UI=AliasMap.Switcher, Text="⚡ Instant Auto-Aim",
+        {Key="LunarAimNormal", UI=AliasMap.Switcher, Text="ايمبوت فوري | Instant Auto-Aim",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.NormalAimbot) end,
             SetFunc=function(c,v)
                 local on = value(c,v)
@@ -2046,45 +2044,45 @@ do
                 end
                 return true
             end},
-        {Key="LunarAimInScope", UI=AliasMap.Switcher, Text="🔭 Scope-Only Aimbot (10-100m)",
+        {Key="LunarAimInScope", UI=AliasMap.Switcher, Text="ايمبوت فتح السكوب | In-Scope Aim",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.InScopeAimbot) end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.InScopeAimbot = value(c,v)
                 return true
             end},
-        {Key="LunarAimLongRange", UI=AliasMap.Switcher, Text="🏹 Bullet Prediction (500m+)",
+        {Key="LunarAimLongRange", UI=AliasMap.Switcher, Text="ايمبوت مسافات بعيدة (+500م) | Long Range",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.LongRange) end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.LongRange = value(c,v)
                 return true
             end},
-        {Key="LunarAimWall", UI=AliasMap.Switcher, Text="🧱 Visible & Wall Target",
+        {Key="LunarAimWall", UI=AliasMap.Switcher, Text="تصويب خلف الجدار | Through Wall Aim",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.WallTarget) end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.WallTarget = value(c,v)
                 return true
             end},
-        {Key="LunarAimCondition", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="🔫 Trigger Condition",
-            SwitcherText={"Firing Only","Continuous"}, SwitcherValue={1, 2},
+        {Key="LunarAimCondition", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="حالة التفعيل | Condition",
+            SwitcherText={"عند الإطلاق فقط","مستمر دائماً"}, SwitcherValue={1, 2},
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.Condition) or 1 end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.Condition = value(c,v)
                 return true
             end},
-        {Key="LunarAimTargetMode", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="🎯 Priority Mode",
-            SwitcherText={"Crosshair","Lowest HP"}, SwitcherValue={1, 2},
+        {Key="LunarAimTargetMode", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="أولوية الهدف | Priority Mode",
+            SwitcherText={"الأقرب للمؤشر","الأقل دماً"}, SwitcherValue={1, 2},
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.TargetMode) or 1 end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.TargetMode = value(c,v)
                 return true
             end},
-        {Key="LunarAimBone", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="🎯 Target Bone",
-            SwitcherText={"Head [Headshot]","Chest [Safe]","Pelvis [Body]"}, SwitcherValue={1, 2, 3},
+        {Key="LunarAimBone", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="مكان التصويب | Target Bone",
+            SwitcherText={"الرأس (Head)","الصدر (Chest)","الخصر (Pelvis)"}, SwitcherValue={1, 2, 3},
             GetFunc=function()
                 local b = _G.AimbotConfig and _G.AimbotConfig.Bone or "spine_03"
                 if b == "head" then return 1
@@ -2099,14 +2097,14 @@ do
                 else _G.AimbotConfig.Bone = "spine_03" end
                 return true
             end},
-        {Key="LunarAimKnock", UI=AliasMap.Switcher, Text="🚫 Ignore Knocked Players",
+        {Key="LunarAimKnock", UI=AliasMap.Switcher, Text="تجاهل المصابين نوك | Ignore Knocked",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.IgnoreKnock) end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
                 _G.AimbotConfig.IgnoreKnock = value(c,v)
                 return true
             end},
-        {Key="LunarAimBot", UI=AliasMap.Switcher, Text="🤖 Ignore AI / Bot Targets",
+        {Key="LunarAimBot", UI=AliasMap.Switcher, Text="تجاهل البوتات | Ignore Bots",
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.IgnoreBot) end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
@@ -2130,25 +2128,25 @@ do
                 end
             }
         end
-        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimFOV", "📐 Aimbot FOV Circle", 1, 300,
+        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimFOV", "مجال الرؤية | Aimbot FOV", 1, 300,
             function() return _G.AimbotConfig and _G.AimbotConfig.FOV or 30 end,
             function(val) if not _G.AimbotConfig then _G.AimbotConfig={} end _G.AimbotConfig.FOV = val end
         )
-        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimDist", "📏 Max Distance (m)", 10, 1000,
+        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimDist", "المسافة القصوى بالمتر | Max Distance", 10, 1000,
             function() return _G.AimbotConfig and _G.AimbotConfig.Distance or 250 end,
             function(val) if not _G.AimbotConfig then _G.AimbotConfig={} end _G.AimbotConfig.Distance = val end
         )
-        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimSpeed", "⚡ Smooth Aim Speed", 1, 100,
+        AimbotStack[#AimbotStack + 1] = aimSlider("LunarAimSpeed", "سرعة وسلاسة التصويب | Aim Speed", 1, 100,
             function() return _G.AimbotConfig and _G.AimbotConfig.Speed or 50 end,
             function(val) if not _G.AimbotConfig then _G.AimbotConfig={} end _G.AimbotConfig.Speed = val end
         )
     end
-    local page={Key="HackMenu",Text="👑 MANSY GAMING VIP 👑",UIKey="Setting_Page_Privacy",Category={
-        {Key="Lunar_ESP_V1",Text="👁️ ESP CLASSIC",Stack=V1},
-        {Key="Lunar_ESP_V2",Text="⚡ ESP ADVANCED",Stack=V2},
-        {Key="Lunar_Aimbot",Text="🎯 AIMBOT PRO",Stack=AimbotStack},
-        {Key="Lunar_Skins",Text="👑 SKIN CHANGER",Stack=Skins},
-        {Key="Lunar_Other",Text="⚙️ MISC & VISUALS",Stack=Other}
+    local page={Key="HackMenu",Text="Mansy Gaming (مانسي)",UIKey="Setting_Page_Privacy",Category={
+        {Key="Lunar_ESP_V1",Text="ESP V1 (كاشف عادي)",Stack=V1},
+        {Key="Lunar_ESP_V2",Text="ESP V2 (كاشف متقدم)",Stack=V2},
+        {Key="Lunar_Aimbot",Text="Aimbot (توجيه وايمبوت)",Stack=AimbotStack},
+        {Key="Lunar_Skins",Text="Skins (مغير السكنات)",Stack=Skins},
+        {Key="Lunar_Other",Text="Other (مميزات إضافية)",Stack=Other}
     }}
 
         return page
