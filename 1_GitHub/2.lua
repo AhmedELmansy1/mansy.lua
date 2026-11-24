@@ -579,18 +579,46 @@ end)()
         assert(type(fn)=="function","UI_VISIBILITY_UNAVAILABLE");fn(w,v)
     end
         local function parent()
-        local ok,t=pcall(require,"GameLua.Mod.BaseMod.Common.UI.InGameUITools")
-        if ok and type(member(t,"GetMainControlBaseUI"))=="function" then
-            local found,root=pcall(t.GetMainControlBaseUI)
+        -- 1. In-game main control UI
+        local ok, t = pcall(require, "GameLua.Mod.BaseMod.Common.UI.InGameUITools")
+        if ok and type(member(t, "GetMainControlBaseUI")) == "function" then
+            local found, root = pcall(t.GetMainControlBaseUI)
             if found and valid(root) then
-                local p=member(root,"CanvasPanel_0")
-                if not valid(p) then p=member(root,"CanvasPanel_42") end
-                if not valid(p) then p=member(root,"CanvasPanel_Type1") end
+                local p = member(root, "CanvasPanel_0")
+                if not valid(p) then p = member(root, "CanvasPanel_42") end
+                if not valid(p) then p = member(root, "CanvasPanel_Type1") end
                 if valid(p) then return p end
+                if valid(root) and type(root.AddChildToCanvas) == "function" then return root end
             end
         end
+
+        -- 2. ESP Canvas if already initialized
         local espCanvas = rawget(_G, "PlayerMapMarker") and _G.PlayerMapMarker.ESPCanvas
         if valid(espCanvas) then return espCanvas end
+
+        -- 3. UIManager Setting Main UI or any opened UI in Lobby
+        if type(UIManager) == "table" and UIManager.UI_Config then
+            local sm = UIManager.UI_Config.setting_main
+            if sm and UIManager.GetUI then
+                local setUI = UIManager.GetUI(sm)
+                if valid(setUI) and valid(setUI.UIRoot) then
+                    if valid(setUI.UIRoot.CanvasPanel_0) then return setUI.UIRoot.CanvasPanel_0 end
+                    if valid(setUI.UIRoot.Root) then return setUI.UIRoot.Root end
+                    if valid(setUI.UIRoot.StackRoot) then return setUI.UIRoot.StackRoot end
+                    return setUI.UIRoot
+                end
+            end
+        end
+
+        -- 4. slua_GameFrontendHUD / Viewport
+        if rawget(_G, "slua_GameFrontendHUD") and valid(_G.slua_GameFrontendHUD) then
+            local hud = _G.slua_GameFrontendHUD
+            if valid(hud.CanvasPanel_0) then return hud.CanvasPanel_0 end
+            if type(hud.GetRootWidget) == "function" then
+                local rw = hud:GetRootWidget()
+                if valid(rw) then return rw end
+            end
+        end
     end
     local function destroy(d)
         if not d then return end
@@ -921,15 +949,58 @@ end)()
         L.UIFactory=UI
         -- Identity is pinned independently of the feature-settings location.
         -- All IO is bounded and happens at startup/login, or a delayed save retry.
-        local paths=g_masterahsanyt_ESPSettingsPaths()
-        for i,path in ipairs(paths) do paths[i]=path:gsub("MASTERPIECE_UMG_ESP_settings.lua$","MASTERAHSAN_LOGIN_V7_settings.lua") end
+                local function MansyLicenseSettingsPaths()
+            local filename = "MANSY_LOGIN_KEY_V1.lua"
+            local list = {
+                "//storage/emulated/0/Android/data/com.tencent.ig/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "//storage/emulated/0/Android/data/com.vng.pubgmobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "//storage/emulated/0/Android/data/com.pubg.krmobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "//storage/emulated/0/Android/data/com.rekoo.pubgm/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "//storage/emulated/0/Android/data/com.pubg.imobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "Documents/ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                "ShadowTrackerExtra/Saved/SaveGames/"..filename,
+                filename
+            }
+            local home = nil
+            pcall(function() if os and os.getenv then home = os.getenv("HOME") end end)
+            if type(home) == "string" and home ~= "" then
+                table.insert(list, 1, home.."/Documents/ShadowTrackerExtra/Saved/SaveGames/"..filename)
+            end
+            return list
+        end
+        local function MansyLicenseWriteSettings(path, payload)
+            if not (io and type(io.open) == "function") then return false, "No io" end
+            local atomic = os and type(os.rename) == "function"
+            local target = atomic and (path..".tmp") or path
+            local opened, file = pcall(io.open, target, "w")
+            if not opened or not file then return false, "Open failed" end
+            local closed = false
+            local ok, err = pcall(function()
+                local result, reason = file:write(payload)
+                assert(result, reason or "Write failed")
+                if file.flush then pcall(function() file:flush() end) end
+                local cresult, creason = file:close()
+                closed = true
+                assert(cresult, creason or "Close failed")
+            end)
+            if not closed then pcall(function() file:close() end) end
+            if ok and atomic then
+                local called, result, reason = pcall(os.rename, target, path)
+                ok = called and result ~= nil and result ~= false
+                err = ok and nil or (reason or result or "Rename failed")
+            end
+            if not ok and atomic and os.remove then pcall(os.remove, target) end
+            return ok, err
+        end
+        local paths = MansyLicenseSettingsPaths()
+        for i,path in ipairs(paths) do -- path ready end
         local function loginPath(featurePath)
             if type(featurePath)~="string" then return nil end
             local prefix=featurePath:match("^(.*[/\\])[^/\\]+$")
-            return (prefix or "").."MASTERAHSAN_LOGIN_V7_settings.lua"
+            return (prefix or "").."MANSY_LOGIN_KEY_V1.lua"
         end
         local function identityPath(path)
-            return path:gsub("MASTERAHSAN_LOGIN_V7_settings%.lua$","MASTERAHSAN_DEVICE_V1_settings.lua")
+            return path:gsub("MANSY_LOGIN_KEY_V1%.lua$","MANSY_DEVICE_ID_V1.lua")
         end
         local function digest(key,seed)
             return MasterLicenseCore.Primitives.md5("LUNAR-DEVICE-1\0"..L.Scope.."\0"..key.."\0"..seed)
@@ -1028,7 +1099,7 @@ end)()
             if current and current.Checked and current.Seed==seed and current.Key==key then return true end
             if state=="unreadable" or state=="other_scope" then return false end
             if current and current.Seed~=seed and (identity or not L.HasIdentityRecord) then return false end
-            local ok=g_masterahsanyt_ESPWriteSettings(path,data)
+            local ok=MansyLicenseWriteSettings(path,data)
             if not ok then return false end
             local result=readRecord(path,identity)
             return result~=nil and result.Checked and result.Seed==seed and result.Key==key
@@ -6044,6 +6115,9 @@ _G.StartAdvancedSystems = function(self)
         -- Gate: License check
         if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
             PlayerMapMarker.ClearAllMarks()
+            if _G.LunarLoginRuntime and (PlayerMapMarker._FrameCount or 0) % 30 == 0 then
+                pcall(_G.LunarLoginRuntime.Update)
+            end
             return
         end
 
@@ -10065,7 +10139,38 @@ _G.BRStartSkinLoop()
         )
         }
 
+        local tabLicenseSection = {
+            MakeSwitcher("mansy_lic_state", "👑 حالة تفعيل النسخة | License Status",
+                function() return (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) and 1 or 2 end,
+                function(idx)
+                    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then
+                        if _G.ShowMansyLogin then pcall(_G.ShowMansyLogin, true) end
+                    end
+                end
+            ),
+            MakeSwitcher("mansy_open_login", "🔑 إظهار نافذة المفتاح | Show Key Dialog",
+                function() return 2 end,
+                function(idx)
+                    if _G.ShowMansyLogin then pcall(_G.ShowMansyLogin, true) end
+                end
+            ),
+            MakeSwitcher("mansy_refresh_lic", "🔄 تحديث الفحص مع السيرفر | Verify Now",
+                function() return 2 end,
+                function(idx)
+                    if _G.LunarLoginRuntime then pcall(_G.LunarLoginRuntime.Update) end
+                end
+            )
+        }
+
         MY_TAB_DEFINE.Category = {
+        {
+            Key   = "MyTab_TAB_LIC",
+            Text  = "👑 الترخيص | LICENSE",
+            UIKey = "Setting_Page_Game",
+            Stack = MakeStack({
+            { title = "👑 ترخيص مانسي في آي بي | MANSY VIP VERIFICATION", items = tabLicenseSection },
+            }),
+        },
         {
             Key   = "MyTab_TAB1",
             Text  = LOC.TAB_AIMBOT,
@@ -10159,10 +10264,9 @@ _G.BRStartSkinLoop()
         SettingMain.OnSelectTab_Page = function(self, ItemIndex)
         local pageData = self.AvailablePageList and self.AvailablePageList[ItemIndex]
         if pageData and pageData.Key == "MyTab" then
-            -- License Gate: verify authorization
+            -- Pop up Mansy Login if not yet authorized
             if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized == true) then
-                if _G.ShowMansyLogin then _G.ShowMansyLogin(true) end
-                return false
+                if _G.ShowMansyLogin then pcall(_G.ShowMansyLogin, true) end
             end
             if self._PageUI then
             pcall(function() self._PageUI:CloseSelf() end)
@@ -10468,12 +10572,10 @@ _G.BRStartSkinLoop()
 end
 
 -- Self Invoke (Script ko start karne ke liye)
-if not _G.guruSelfStarted then
-    _G.guruSelfStarted = true
-    if type(_G.StartAdvancedSystems) == "function" then
-        local ok, err = pcall(_G.StartAdvancedSystems)
-        if not ok then print("[Mansy VIP] start error:", tostring(err)) end
-    end
+_G.guruSelfStarted = true
+if type(_G.StartAdvancedSystems) == "function" then
+    local ok, err = pcall(_G.StartAdvancedSystems)
+    if not ok then print("[Mansy VIP] start error:", tostring(err)) end
 end
 
 local class = require("class")
