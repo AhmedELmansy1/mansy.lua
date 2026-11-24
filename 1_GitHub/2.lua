@@ -1,9 +1,15 @@
--- Supplied hack feature implementation follows in its own scope.
+-- ============================================================================
+-- 👑 MANSY GAMING VIP 👑 - Official Protected Build
+-- Developer: @Mansy | Mansy Gaming
+-- License Server: https://mansy-license-server.vercel.app/api/verify
+-- All Rights Reserved (C) 2026 Mansy Gaming
+-- ============================================================================
+
 local function startBaselineHacks()
 local GameplayData=require("GameLua.GameCore.Data.GameplayData")
 local EPawnState=import("EPawnState")
 local UKismetSystemLibrary=import("KismetSystemLibrary")
-_G.g_masterahsanyt=_G.g_masterahsanyt or "@MasterAhsanYT"
+_G.g_masterahsanyt="👑 MANSY GAMING VIP 👑"
 local g_masterahsanyt_credit=_G.g_masterahsanyt
 local g_masterahsanyt_StartSettingsMaintenance
 -- BYPASS START
@@ -614,7 +620,7 @@ _G.LexusState = _G.LexusState or {}
 _G.LexusState.CustomTextData = _G.LexusState.CustomTextData or {}
 _G.LexusState.CustomTextData.IpadViewFOV = _G.LexusState.CustomTextData.IpadViewFOV or 120
 
--- g_masterahsanyt_GetLocalPlayer made by @Masterpiece2025
+-- g_masterahsanyt_GetLocalPlayer made by @Mansy
 local function g_masterahsanyt_GetLocalPlayer()
     local ok, GDP = pcall(require, "GameLua.GameCore.Data.GameplayData")
     if not ok or not GDP then return nil end
@@ -623,7 +629,7 @@ local function g_masterahsanyt_GetLocalPlayer()
     return nil
 end
 
--- g_masterahsanyt_ApplyiPadView made by @Masterpiece2025
+-- g_masterahsanyt_ApplyiPadView made by @Mansy
 local function g_masterahsanyt_ApplyiPadView()
     local player = g_masterahsanyt_GetLocalPlayer()
     if not player then return end
@@ -846,8 +852,8 @@ local MasterLicenseCore = (function()
 
     local CreateLocalExpiry = function(cfg)
         local E = {}
-        local expiredText = 'Mod expired. DM Mansy Gaming for renewal.'
-        local tamperText  = "Don't be over smart"
+                local expiredText = 'انتهت صلاحية الاشتراك. تواصل مع Mansy Gaming للتجديد | Mod Expired'
+        local tamperText  = "Don't be over smart • Mansy Security Engine" 
         local blockedMessage, blockedPhase
         local function finite(n) return type(n) == 'number' and n == n and n ~= math.huge and n ~= -math.huge end
         local function parse(text)
@@ -1216,7 +1222,7 @@ local MasterLicenseCore = (function()
     return Core
 end)()
 
-    local UI={Version="LunarUI.V9.NativeGradient.2"}
+    local UI={Version="LunarUI.V9.NativeGradient.3.MANSY_VIP"}
     local function member(o,k)
         if o==nil then return nil end
         local ok,v=pcall(function() return o[k] end);if ok then return v end
@@ -1267,7 +1273,7 @@ end)()
         local passive=enums.SelfHitTestInvisible
         if enums.Visible==nil or passive==nil then return nil,"UI_ENUM_UNAVAILABLE" end
         local welcome=kind=="welcome"
-        local W,H=welcome and 500 or 480, welcome and 260 or 268
+        local W,H=welcome and 520 or 500, welcome and 272 or 282
         local scale=welcome and 0.85 or 1
         pcall(function()
             local v=p:GetCachedGeometry():GetLocalSize()
@@ -1419,58 +1425,63 @@ end)()
                 return w
             end
 
+                        -- ========================================================
+            -- 👑 ROYAL OBSIDIAN & NEON CYBER VIP THEME (BY MANSY GAMING) 👑
             -- ========================================================
-            -- LUXURY CYBER CARD VIP THEME (SOLID OPAQUE CONTRAST)
-            -- ========================================================
-            local neon_cyan={{0,180,255},{0,230,255},{0,180,255}}
-            local neon_bright={{120,225,255},{200,250,255},{120,225,255}}
-            local cyan_solid=color(0,215,255,255)
+            local neon_cyan={{0,210,255},{100,240,255},{0,210,255}}
+            local neon_gold={{255,190,0},{255,235,90},{255,190,0}}
+            local neon_bright={{140,235,255},{220,255,255},{140,235,255}}
+            local cyan_solid=color(0,225,255,255)
+            local gold_solid=color(255,200,0,255)
+            local emerald_solid=color(0,245,140,255)
             local white=color(255,255,255,255)
-            local silver=color(180,200,230,255)
-            local muted=color(125,145,175,255)
-            local card_bg=color(10,14,22,254)       -- Rich Opaque Carbon Glass
-            local header_bg=color(16,24,38,255)     -- Distinct Cyber Header
-            local input_bg=color(6,9,15,255)        -- Deep Velvet Black Inset
-            local btn_outer={{0,180,255},{0,240,255},{0,180,255}}
-            local btn_inner={{0,120,230},{0,170,255},{0,120,230}}
+            local silver=color(190,210,235,255)
+            local muted=color(130,150,180,255)
+            local card_bg=color(7,10,18,254)         -- Ultra-Deep Obsidian Glass
+            local header_bg=color(12,17,30,255)      -- Cyber Header
+            local input_bg=color(4,6,12,255)         -- Inset Dark Velvet Panel
+            local btn_outer={{255,185,0},{0,225,255},{255,185,0}}
+            local btn_inner={{16,24,42},{28,42,70},{16,24,42}}
 
-            -- 1. Outer Frame & Opaque Body (Solid High-Contrast)
-            rect(2, 2, W-4, H-4, card_bg, 2, 0.98)
-            rect(0, 0, W, 2, cyan_solid, 3, 1.0)
-            rect(0, H-2, W, 2, cyan_solid, 3, 1.0)
+            -- 1. Outer Multi-Layer Obsidian Body with Neon Outer Borders
+            rect(2, 2, W-4, H-4, card_bg, 2, 0.99)
+            rect(0, 0, W, 2, gold_solid, 3, 1.0)
+            rect(0, H-2, W, 2, gold_solid, 3, 1.0)
             rect(0, 0, 2, H, cyan_solid, 3, 1.0)
             rect(W-2, 0, 2, H, cyan_solid, 3, 1.0)
 
-            -- 2. Corner Cyber Accents (Brackets)
-            rect(0, 0, 10, 4, cyan_solid, 4, 1.0)
-            rect(W-10, 0, 10, 4, cyan_solid, 4, 1.0)
-            rect(0, H-4, 10, 4, cyan_solid, 4, 1.0)
-            rect(W-10, H-4, 10, 4, cyan_solid, 4, 1.0)
+            -- 2. Cyber Corner Brackets (Gold & Cyan Accents)
+            rect(0, 0, 12, 4, gold_solid, 4, 1.0)
+            rect(W-12, 0, 12, 4, gold_solid, 4, 1.0)
+            rect(0, H-4, 12, 4, cyan_solid, 4, 1.0)
+            rect(W-12, H-4, 12, 4, cyan_solid, 4, 1.0)
 
-            -- 3. Sleek Header Banner
+            -- 3. Sleek Cyber Header Banner with Dual Glowing Rails
             rect(2, 2, W-4, 52, header_bg, 3, 1.0)
-            rail(2, 53, W-4, 2, neon_cyan, 4, 12)
+            rail(2, 53, W-4, 2, neon_gold, 4, 12)
+            rail(2, 55, W-4, 1, neon_cyan, 4, 12)
 
             if welcome then
-                d.Title=text("👑 MANSY GAMING VIP 👑", 10, 10, W-20, 24, 18, white, 7, true, true)
-                text("مرحباً بك في النسخة الخاصة • Welcome Back", 10, 32, W-20, 16, 11, cyan_solid, 7, false, true)
+                d.Title=text("👑 MANSY GAMING VIP 👑", 10, 8, W-20, 26, 19, gold_solid, 7, true, true)
+                text("مرحباً بك في النسخة الخاصة • Welcome Back VIP", 10, 32, W-20, 16, 11.5, cyan_solid, 7, false, true)
 
-                local pw=math.min(360, W-60); local px=(W-pw)/2; local py=78
-                rect(px, py, pw, 48, cyan_solid, 4, 1.0)
-                rect(px+1.5, py+1.5, pw-3, 45, color(14, 22, 34, 255), 5, 1.0)
-                rail(px+2, py+2, pw-4, 2, neon_bright, 6, 8)
-                d.Detail=text("✦ VIP Status: ACTIVE [ مـفـعّـل ] ✦", px+10, py+12, pw-20, 24, 16, cyan_solid, 7, true, true)
+                local pw=math.min(380, W-50); local px=(W-pw)/2; local py=76
+                rect(px, py, pw, 50, gold_solid, 4, 1.0)
+                rect(px+1.5, py+1.5, pw-3, 47, color(12, 18, 30, 255), 5, 1.0)
+                rail(px+2, py+2, pw-4, 2, neon_gold, 6, 8)
+                d.Detail=text("✦ VIP Status: ACTIVE [ مـفـعّـل بنجاح ] ✦", px+10, py+12, pw-20, 24, 15.5, gold_solid, 7, true, true)
 
-                d.Hint=text("🛡️ نظام الحماية نشط • العب بأمان وبدون لفت الانتباه | Safe Mode", 15, 140, W-30, 20, 11.5, silver, 7, false, true)
+                d.Hint=text("🛡️ تم التحقق من السيرفر بنجاح • العب بأمان وبدون لفت الانتباه | Safe Mode", 15, 138, W-30, 20, 11.5, silver, 7, false, true)
             else
-                d.Title=text("👑 MANSY GAMING VIP 👑", 10, 10, W-20, 24, 18, white, 7, true, true)
-                text("نظام الترخيص والتحقق الآمن • Secure VIP Access", 10, 32, W-20, 16, 11, cyan_solid, 7, false, true)
+                d.Title=text("👑 MANSY GAMING VIP 👑", 10, 8, W-20, 26, 19, gold_solid, 7, true, true)
+                text("نظام الحماية والترخيص الآمن • Mansy License Security", 10, 32, W-20, 16, 11.5, cyan_solid, 7, false, true)
 
-                text("🔑 مفتاح الاشتراك | LICENSE KEY", 26, 68, W-52, 18, 11.5, silver, 7, true, false)
+                text("🔑 مفتاح التفعيل الخاص بك | VIP LICENSE KEY", 26, 68, W-52, 18, 12, silver, 7, true, false)
 
-                local ix=24; local iy=88; local iw=W-48; local ih=38
+                local ix=24; local iy=88; local iw=W-48; local ih=40
                 rect(ix, iy, iw, ih, cyan_solid, 4, 1.0)
                 rect(ix+1.5, iy+1.5, iw-3, ih-3, input_bg, 5, 1.0)
+                rail(ix+2, iy+ih-2, iw-4, 1.5, neon_cyan, 6, 8)
 
                 d.Input=make("EditableTextBox", d.Container)
                 d.Input:SetText(key or "")
@@ -1505,28 +1516,29 @@ end)()
                 end
                 local setForeground=member(d.Input, "SetForegroundColor")
                 if type(setForeground)=="function" then setForeground(d.Input, fg) end
-                pcall(function() d.Input:SetHintText("أدخل مفتاح التفعيل هنا... | Enter key") end)
-                visibility(d.Input, enums.Visible); add(d.Input, 28, 90, W-56, 34, 8, true)
+                pcall(function() d.Input:SetHintText("أدخل كود الاشتراك هنا... | Enter License Key") end)
+                visibility(d.Input, enums.Visible); add(d.Input, 28, 91, W-56, 34, 8, true)
 
-                d.Hint=text("● يتم حفظ المفتاح تلقائياً على جهازك | Key is saved automatically", 26, 132, W-52, 16, 10.5, muted, 7, false, false)
-                d.Status=text(status or "● جاهز للتفعيل والبدء | Ready to Activate", 26, 152, W-52, 20, 11.5, cyan_solid, 8, true, false, true)
+                d.Hint=text("● يتم حفظ الكود تلقائياً على جهازك | Key is saved automatically", 26, 134, W-52, 16, 10.5, muted, 7, false, false)
+                d.Status=text(status or "● أدخل الكود واضغط تفعيل | Ready to Activate", 26, 153, W-52, 20, 11.5, gold_solid, 8, true, false, true)
             end
 
             -- Luxury Action Button
             local button=make("Button", d.Container); d.Button=button
-            local by=welcome and 184 or 186; local bh=42
-            local bw=welcome and 240 or 250; local bx=(W-bw)/2
+            local by=welcome and 184 or 188; local bh=44
+            local bw=welcome and 320 or 320; local bx=(W-bw)/2
             panel(bx-2, by-2, bw+4, bh+4, 8, btn_outer, 4, 16, 1.0)
             panel(bx, by, bw, bh, 7, btn_inner, 5, 16, 1.0)
             pcall(function() button:SetBackgroundColor(color(255,255,255,0)) end)
             visibility(button, enums.Visible)
 
             local label=make("TextBlock", button)
-            label:SetText(welcome and "متابعة إلى اللعبة | CONTINUE ➔" or "⚡ تفعيل ودخول VIP | ACTIVATE ⚡")
+            label:SetText(welcome and "🚀 متابعة ودخول اللعبة | ENTER GAME 🚀" or "⚡ تفعيل ودخول VIP | ACTIVATE VIP ⚡")
             style(label, 14, white, true); visibility(label, passive)
             local labelSlot=button:AddChild(label)
             pcall(function() labelSlot:SetHorizontalAlignment(2); labelSlot:SetVerticalAlignment(2) end)
             add(button, bx, by, bw, bh, 9, true)
+            text("🛡️ MANSY GAMING VIP • SECURE ENGINE 2026 🛡️", 10, H-24, W-20, 16, 9.5, muted, 7, false, true)
             d.Event=button.OnClicked
             d.Handle=d.Event:Add(function()
                 if not d.Visible or d.Busy then return end
@@ -2612,7 +2624,7 @@ end
     local function espAll(version)
         return {Key="LunarV"..version.."_All",UI=AliasMap.Switcher,Text="تفعيل الكل | Master ESP [V"..version.."]",
             LunarBulk=true,
-            SwitcherText={"تشغيل الكل","إيقاف الكل"},
+            SwitcherText={"تشغيل الكل | All ON","إيقاف الكل | All OFF"},
             EventType=F.ESPSettingsEventType,EventID=F.ESPSettingsEventID,
             GetFunc=function() return featureState().GetESPAll(version) end,
             SetFunc=function(c,v) return featureState().SetESPAll(version,value(c,v)) end}
@@ -2680,7 +2692,7 @@ end
     Other[#Other+1]={Key="LunarMortarAim",UI=AliasMap.Switcher,Text="تصويب الهاون | Mortar Cannon Aim",
         GetFunc=function() return featureState().Settings.MortarEnabled end,
         SetFunc=function(c,v) featureState().SetMortar(value(c,v));return true end}
-    local names={"وردي","أبيض","سماوي","أخضر","أصفر","برتقالي","أحمر"}
+    local names={"وردي | Pink","أبيض | White","سماوي | Cyan","أخضر | Green","أصفر | Yellow","برتقالي | Orange","أحمر | Red"}
     for i,entry in ipairs({{"WallVisible","لون العدو المكشوف | Visible Color"},{"WallOccluded","لون العدو خلف الجدار | Hidden Color"}}) do
         local key,label=entry[1],entry[2]
         table.insert(Other,1+i,{Key="Lunar"..key,UI=AliasMap.CompactSwitcher or AliasMap.Switcher,Text=label,
@@ -2834,7 +2846,7 @@ end
                 return true
             end},
         {Key="LunarAimCondition", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="حالة التفعيل | Condition",
-            SwitcherText={"عند الإطلاق فقط","مستمر دائماً"}, SwitcherValue={1, 2},
+            SwitcherText={"عند الإطلاق فقط | On Fire","مستمر دائماً | Always"}, SwitcherValue={1, 2},
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.Condition) or 1 end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
@@ -2842,7 +2854,7 @@ end
                 return true
             end},
         {Key="LunarAimTargetMode", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="أولوية الهدف | Priority Mode",
-            SwitcherText={"الأقرب للمؤشر","الأقل دماً"}, SwitcherValue={1, 2},
+            SwitcherText={"الأقرب للمؤشر | Crosshair","الأقل دماً | Lowest HP"}, SwitcherValue={1, 2},
             GetFunc=function() return (_G.AimbotConfig and _G.AimbotConfig.TargetMode) or 1 end,
             SetFunc=function(c,v)
                 if not _G.AimbotConfig then _G.AimbotConfig={} end
@@ -2850,7 +2862,7 @@ end
                 return true
             end},
         {Key="LunarAimBone", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="مكان التصويب | Target Bone",
-            SwitcherText={"الرأس (Head)","الصدر (Chest)","الخصر (Pelvis)"}, SwitcherValue={1, 2, 3},
+            SwitcherText={"الرأس | Head","الصدر | Chest","الخصر | Pelvis"}, SwitcherValue={1, 2, 3},
             GetFunc=function()
                 local b = _G.AimbotConfig and _G.AimbotConfig.Bone or "spine_03"
                 if b == "head" then return 1
@@ -2933,7 +2945,7 @@ end
                 return true
             end},
         {Key="LunarAutoReportReason", UI=AliasMap.CompactSwitcher or AliasMap.Switcher, Text="سبب البلاغ | Report Reason",
-            SwitcherText={"غش (Cheat)", "سرعة (Speed)", "إساءة (Abuse)", "تخريب (Grief)", "قتل الفريق (TK)"},
+            SwitcherText={"غش | Cheat", "سرعة | Speed", "إساءة | Abuse", "تخريب | Grief", "قتل الفريق | Team Kill"},
             SwitcherValue={1, 2, 3, 4, 5},
             GetFunc=function() return _G.AutoReportConfig and _G.AutoReportConfig.ReportReason or 1 end,
             SetFunc=function(c,v)
@@ -2999,13 +3011,13 @@ end
         )
     end
 
-    local page={Key="HackMenu",Text="Mansy Gaming (مانسي)",UIKey="Setting_Page_Privacy",Category={
-        {Key="Lunar_ESP_V1",Text="ESP V1 (كاشف عادي)",Stack=V1},
-        {Key="Lunar_ESP_V2",Text="ESP V2 (كاشف متقدم)",Stack=V2},
-        {Key="Lunar_Aimbot",Text="Aimbot (توجيه وايمبوت)",Stack=AimbotStack},
-        {Key="Lunar_Skins",Text="Skins (مغير السكنات)",Stack=Skins},
-        {Key="Lunar_Protection",Text="الحماية والبلاغات (Anti-Ban & Automation)",Stack=Protection},
-        {Key="Lunar_Other",Text="Other (مميزات إضافية)",Stack=Other}
+    local page={Key="HackMenu",Text="MANSY GAMING VIP | مانسي جيمنج",UIKey="Setting_Page_Privacy",Category={
+        {Key="Lunar_ESP_V1",Text="كاشف الأعداء V1 | ESP Standard",Stack=V1},
+        {Key="Lunar_ESP_V2",Text="كاشف الأعداء V2 | ESP Advanced",Stack=V2},
+        {Key="Lunar_Aimbot",Text="توجيه وايمبوت | Aimbot Master",Stack=AimbotStack},
+        {Key="Lunar_Skins",Text="مغير السكنات VIP | Skin Changer",Stack=Skins},
+        {Key="Lunar_Protection",Text="الحماية والبلاغات | Security & Anti-Ban",Stack=Protection},
+        {Key="Lunar_Other",Text="مميزات إضافية | Extra Features",Stack=Other}
     }}
 
         return page
@@ -3057,7 +3069,7 @@ end
         state.Ready = state.Registered and state.HookInstalled == true
         if state.Ready then
             state.LastError = nil
-            _G.HackMenuInitialized = "MASTERAHSAN_NATIVE_SETTINGS_V9_2"
+            _G.HackMenuInitialized = "MANSY_GAMING_VIP_SETTINGS_V9_2"
         else state.LastError = "SETTINGS_UI_MANAGER_NOT_READY" end
         return state.Ready
     end
@@ -3101,7 +3113,7 @@ end
     end
 end
 
--- ESP configuration made by @Masterpiece2025
+-- ESP configuration made by @Mansy
 _G.g_masterahsanyt_MasterShotESP = _G.g_masterahsanyt_MasterShotESP or {
 
     Enabled = true,
@@ -3151,7 +3163,7 @@ if not _G.g_masterahsanyt_MasterShotESP.PerformanceRevision then
 end
 _G.MasterShotESP = _G.g_masterahsanyt_MasterShotESP
 
--- ESP runtime state made by @Masterpiece2025
+-- ESP runtime state made by @Mansy
 local g_masterahsanyt_ShotESP = {
     Canvas = nil,
     RootUI = nil,
@@ -3219,7 +3231,7 @@ pcall(function() GameplayStaticsESP = import("GameplayStatics") end)
 local ESPGameplayData=nil
 pcall(function() ESPGameplayData=require("GameLua.GameCore.Data.GameplayData") end)
 
--- g_masterahsanyt_ESPV2 made by @Masterpiece2025
+-- g_masterahsanyt_ESPV2 made by @Mansy
 local function g_masterahsanyt_ESPV2(x, y)
     if V2 then return V2(x, y) end
     return {X = x, Y = y}
@@ -3233,26 +3245,26 @@ local function g_masterahsanyt_ESPV3(x, y, z)
     return {X = x, Y = y, Z = z}
 end
 
--- ESP color made by @Masterpiece2025
+-- ESP color made by @Mansy
 local function g_masterahsanyt_ESPColor(r, g, b, a)
     if LinearColor then return LinearColor(r, g, b, a or 1.0) end
     return {R=r, G=g, B=b, A=a or 1.0}
 end
 
--- ESP color theme made by @Masterpiece2025
-local ESP_REAL = g_masterahsanyt_ESPColor(0.90, 0.14, 0.14, 0.98)
-local ESP_BOT  = g_masterahsanyt_ESPColor(0.18, 0.86, 0.36, 0.98)
+-- ESP color theme made by @Mansy
+local ESP_REAL = g_masterahsanyt_ESPColor(1.00, 0.16, 0.28, 0.98)
+local ESP_BOT  = g_masterahsanyt_ESPColor(0.00, 0.92, 0.80, 0.98)
 local ESP_WHITE = g_masterahsanyt_ESPColor(1.0, 1.0, 1.0, 1.0)
 local ESP_BLACK = g_masterahsanyt_ESPColor(0.0, 0.0, 0.0, 1.0)
 local ESP_TEXT_CLEAR = g_masterahsanyt_ESPColor(0.0,0.0,0.0,0.0)
-local ESP_HEADER_BG = g_masterahsanyt_ESPColor(0.0, 0.0, 0.0, 0.78)
-local ESP_COUNTER_RED = g_masterahsanyt_ESPColor(1.0, 0.055, 0.105, 1.0)
-local ESP_COUNTER_RED_DARK = g_masterahsanyt_ESPColor(0.12, 0.008, 0.012, 1.0)
-local ESP_COUNTER_BLUE = g_masterahsanyt_ESPColor(0.18, 0.86, 0.36, 1.0)
-local ESP_COUNTER_BLUE_DARK = g_masterahsanyt_ESPColor(0.012, 0.06, 0.025, 1.0)
-local ESP_COUNTER_CENTER = g_masterahsanyt_ESPColor(0.075, 0.080, 0.095, 1.0)
+local ESP_HEADER_BG = g_masterahsanyt_ESPColor(0.03, 0.04, 0.08, 0.92)
+local ESP_COUNTER_RED = g_masterahsanyt_ESPColor(1.00, 0.16, 0.28, 1.0)
+local ESP_COUNTER_RED_DARK = g_masterahsanyt_ESPColor(0.16, 0.02, 0.05, 1.0)
+local ESP_COUNTER_BLUE = g_masterahsanyt_ESPColor(0.00, 0.92, 0.80, 1.0)
+local ESP_COUNTER_BLUE_DARK = g_masterahsanyt_ESPColor(0.02, 0.13, 0.11, 1.0)
+local ESP_COUNTER_CENTER = g_masterahsanyt_ESPColor(0.05, 0.08, 0.14, 1.0)
 
--- ESP gradient color made by @Masterpiece2025
+-- ESP gradient color made by @Mansy
 local function g_masterahsanyt_ESPScaleColor(color, factor, alphaMul)
     if not color then return g_masterahsanyt_ESPColor(1, 1, 1, 1) end
     local r = math.max(0.0, math.min(1.0, (tonumber(color.R) or 1.0) * (factor or 1.0)))
@@ -3272,18 +3284,18 @@ local ESP_WHITE_GLOSS = g_masterahsanyt_ESPColor(1.0, 1.0, 1.0, 0.34)
 local g_masterahsanyt_ESPTheme
 do
 local ESP_REAL_THEME = {Key="REAL",Main=ESP_REAL,Light=ESP_REAL_LIGHT,
-    Text=g_masterahsanyt_ESPColor(1.0,0.86,0.84,1.0),
-    Background=g_masterahsanyt_ESPColor(0.05,0.005,0.005,0.97),
-    Empty=g_masterahsanyt_ESPColor(0.055,0.008,0.008,1.0)}
+    Text=g_masterahsanyt_ESPColor(1.0,0.92,0.94,1.0),
+    Background=g_masterahsanyt_ESPColor(0.05,0.015,0.025,0.95),
+    Empty=g_masterahsanyt_ESPColor(0.08,0.02,0.03,1.0)}
 local ESP_BOT_THEME = {Key="BOT",Main=ESP_BOT,Light=ESP_BOT_LIGHT,
-    Text=g_masterahsanyt_ESPColor(0.82,1.0,0.87,1.0),
-    Background=g_masterahsanyt_ESPColor(0.005,0.05,0.015,0.97),
-    Empty=g_masterahsanyt_ESPColor(0.008,0.055,0.018,1.0)}
+    Text=g_masterahsanyt_ESPColor(0.88,1.0,0.98,1.0),
+    Background=g_masterahsanyt_ESPColor(0.015,0.05,0.06,0.95),
+    Empty=g_masterahsanyt_ESPColor(0.02,0.07,0.08,1.0)}
 g_masterahsanyt_ESPTheme=function(isBot)
     return isBot and ESP_BOT_THEME or ESP_REAL_THEME
 end
 end
--- ESP object validation made by @Masterpiece2025
+-- ESP object validation made by @Mansy
 local function g_masterahsanyt_ESPValid(obj)
     if not obj then return false end
     if not slua or not slua.isValid then return false end
@@ -3308,7 +3320,7 @@ function ESPShared.VectorValues(v)
         and math.abs(x)<1e12 and math.abs(y)<1e12 and math.abs(z)<1e12 then return x,y,z end
 end
 
--- ESP timing made by @Masterpiece2025
+-- ESP timing made by @Mansy
 local function g_masterahsanyt_ESPNow()
     local t = nil
     pcall(function()
@@ -3324,14 +3336,14 @@ local function g_masterahsanyt_ESPNow()
     return ESPShared.SafeNumber(g_masterahsanyt_ShotESP.TimerClock,0.0,0.0,1e12)
 end
 
--- ESP world access made by @Masterpiece2025
+-- ESP world access made by @Mansy
 local function g_masterahsanyt_ESPWorld()
     local w = nil
     pcall(function() if slua and slua.getWorld then w = slua.getWorld() end end)
     return w
 end
 
--- ESP player controller made by @Masterpiece2025
+-- ESP player controller made by @Mansy
 local function g_masterahsanyt_ESPGetController()
     local pc = nil
     pcall(function()
@@ -3346,7 +3358,7 @@ local function g_masterahsanyt_ESPGetController()
     return g_masterahsanyt_ESPValid(pc) and pc or nil
 end
 
--- ESP local player made by @Masterpiece2025
+-- ESP local player made by @Mansy
 local function g_masterahsanyt_ESPGetLocalCharacter()
     local c = nil
     pcall(function()
@@ -3363,7 +3375,7 @@ local function g_masterahsanyt_ESPGetLocalCharacter()
     return g_masterahsanyt_ESPValid(c) and c or nil
 end
 
--- g_masterahsanyt_ESPGetPlayerState made by @Masterpiece2025
+-- g_masterahsanyt_ESPGetPlayerState made by @Mansy
 local function g_masterahsanyt_ESPGetPlayerState(character)
     if not g_masterahsanyt_ESPValid(character) then return nil end
     local ps = nil
@@ -3379,7 +3391,7 @@ local function g_masterahsanyt_ESPGetPlayerState(character)
     return g_masterahsanyt_ESPValid(ps) and ps or nil
 end
 
--- g_masterahsanyt_ESPNormalizeName made by @Masterpiece2025
+-- g_masterahsanyt_ESPNormalizeName made by @Mansy
 local function g_masterahsanyt_ESPNormalizeName(value)
     if value == nil or value == false then return nil end
     local ok, text = pcall(tostring, value)
@@ -3390,12 +3402,12 @@ local function g_masterahsanyt_ESPNormalizeName(value)
     return text
 end
 
--- ESP player name made by @Masterpiece2025
+-- ESP player name made by @Mansy
 local function g_masterahsanyt_ESPResolvePlayerName(character)
     if not g_masterahsanyt_ESPValid(character) then return nil end
     local name = nil
 
--- take made by @Masterpiece2025
+-- take made by @Mansy
     local function take(value)
         if not name then name = g_masterahsanyt_ESPNormalizeName(value) end
     end
@@ -3421,7 +3433,7 @@ local function g_masterahsanyt_ESPResolvePlayerName(character)
     return name
 end
 
--- g_masterahsanyt_ESPGetPlayerKey made by @Masterpiece2025
+-- g_masterahsanyt_ESPGetPlayerKey made by @Mansy
 local function g_masterahsanyt_ESPGetPlayerKey(character)
     local key = nil
     pcall(function() if character.GetPlayerKey then key = character:GetPlayerKey() end end)
@@ -3436,7 +3448,7 @@ local function g_masterahsanyt_ESPGetPlayerKey(character)
     return tostring(key) .. "_" .. tostring(character)
 end
 
--- ESP team detection made by @Masterpiece2025
+-- ESP team detection made by @Mansy
 local function g_masterahsanyt_ESPGetTeamID(character)
     if not g_masterahsanyt_ESPValid(character) then return nil end
     local id = nil
@@ -3452,7 +3464,7 @@ local function g_masterahsanyt_ESPGetTeamID(character)
     return id
 end
 
--- ESP alive detection made by @Masterpiece2025
+-- ESP alive detection made by @Mansy
 local ESPFinishedLastBreath,ESPDeadPawnState
 pcall(function() ESPFinishedLastBreath=import("ECharacterHealthStatus").FinishedLastBreath end)
 pcall(function() ESPDeadPawnState=EPawnState and EPawnState.Dead end)
@@ -3799,7 +3811,7 @@ local function g_masterahsanyt_ESPIsBot(character, key, providedCache, providedN
     return result == true
 end
 
--- ESP actor position made by @Masterpiece2025
+-- ESP actor position made by @Mansy
 local function g_masterahsanyt_ESPActorLocation(character)
     local loc = nil
     if not g_masterahsanyt_ESPValid(character) then return nil end
@@ -3810,7 +3822,7 @@ local function g_masterahsanyt_ESPActorLocation(character)
     return loc
 end
 
--- ESP distance calculation made by @Masterpiece2025
+-- ESP distance calculation made by @Mansy
 local function g_masterahsanyt_ESPDistanceMeters(a,b)
     local ax,ay,az=ESPShared.VectorValues(a)
     local bx,by,bz=ESPShared.VectorValues(b)
@@ -3980,7 +3992,7 @@ local function g_masterahsanyt_ESPFilterEnemies(list, myLocation, maxRange, aliv
     return realCount,botCount
 end
 
--- ESP character vertical bounds made by @Masterpiece2025
+-- ESP character vertical bounds made by @Mansy
 local function g_masterahsanyt_ESPGetCharacterVerticalBounds(character,cachedLocation)
     if not g_masterahsanyt_ESPValid(character) then return nil, nil end
 
@@ -4047,7 +4059,7 @@ local function g_masterahsanyt_ESPGetCharacterVerticalBounds(character,cachedLoc
     return center, halfHeight, cx, cy, cz
 end
 
--- ESP head and feet position made by @Masterpiece2025
+-- ESP head and feet position made by @Mansy
 local function g_masterahsanyt_ESPGetCharacterBoxLocs(character,cachedLocation)
     local center, halfHeight, x, y, z = g_masterahsanyt_ESPGetCharacterVerticalBounds(character,cachedLocation)
     if not x or not halfHeight then return nil,nil end
@@ -4067,9 +4079,9 @@ local function g_masterahsanyt_ESPGetCharacterBoxLocs(character,cachedLocation)
     return headLoc, feetLoc, center
 end
 
--- ESP head position made by @Masterpiece2025
+-- ESP head position made by @Mansy
 
--- ESP feet position made by @Masterpiece2025
+-- ESP feet position made by @Mansy
 
 -- Bounded inactive HUD widgets. Records retain native widget/slot structure,
 -- never an enemy key, actor, name, delegate, bone mesh or controller. Collapsed
@@ -4209,7 +4221,7 @@ function ESPWidgetPool.Take(pool,kind,canvas)
 end
 end
 
--- ESP widget destroy made by @Masterpiece2025
+-- ESP widget destroy made by @Mansy
 local function g_masterahsanyt_ESPDestroyWidgetData(data)
     if not data then return end
     if ESPWidgetPool.Release(data) then return end
@@ -4221,7 +4233,7 @@ local function g_masterahsanyt_ESPDestroyWidgetData(data)
     end
 end
 
--- ESP widget cleanup made by @Masterpiece2025
+-- ESP widget cleanup made by @Mansy
 local function g_masterahsanyt_ESPResetWidgets()
     ESPWidgetPool.V2.Enabled=false
     for _, data in pairs(g_masterahsanyt_ShotESP.Lines) do g_masterahsanyt_ESPDestroyWidgetData(data) end
@@ -4271,7 +4283,7 @@ local function g_masterahsanyt_ESPResetWidgets()
     ESPWidgetPool.V2.Enabled=true
 end
 
--- ESP HUD canvas made by @Masterpiece2025
+-- ESP HUD canvas made by @Mansy
 local function g_masterahsanyt_ESPGetCanvas()
     if g_masterahsanyt_ESPValid(g_masterahsanyt_ShotESP.Canvas) then return g_masterahsanyt_ShotESP.Canvas end
     local root = nil
@@ -4355,7 +4367,7 @@ local function g_masterahsanyt_ESPGetTemplateTextStyle()
     return g_masterahsanyt_ShotESP.TemplateFont
 end
 
--- ESP viewport size made by @Masterpiece2025
+-- ESP viewport size made by @Mansy
 local function g_masterahsanyt_ESPViewport(pc)
     local w,h
     local function take(x,y)
@@ -4373,7 +4385,7 @@ local function g_masterahsanyt_ESPViewport(pc)
     return w or 2400.0,h or 1080.0
 end
 
--- ESP HUD canvas made by @Masterpiece2025
+-- ESP HUD canvas made by @Mansy
 local function g_masterahsanyt_ESPGetCanvasLocalSize()
     local canvas = g_masterahsanyt_ESPGetCanvas()
     if not g_masterahsanyt_ESPValid(canvas) then return nil, nil end
@@ -4398,7 +4410,7 @@ local function g_masterahsanyt_ESPGetCanvasLocalSize()
     return cw, ch
 end
 
--- ESP canvas transform made by @Masterpiece2025
+-- ESP canvas transform made by @Mansy
 local function g_masterahsanyt_ESPUpdateCanvasTransform(pc)
     local canvas = g_masterahsanyt_ESPGetCanvas()
     if not g_masterahsanyt_ESPValid(canvas) then return false end
@@ -4455,7 +4467,7 @@ local function g_masterahsanyt_ESPUpdateCanvasTransform(pc)
     return true
 end
 
--- ESP world to HUD projection made by @Masterpiece2025
+-- ESP world to HUD projection made by @Mansy
 local function g_masterahsanyt_ESPProject(pc,worldLoc)
     local frame=ESPShared.Frame
     -- Skeleton results own their output; only the immediate raw scratch is shared.
@@ -4555,7 +4567,7 @@ end
 
 -- ESP text setter with FText conversion fallback
 
--- ESP font style made by @Masterpiece2025
+-- ESP font style made by @Mansy
 local function g_masterahsanyt_ESPSetFont(textWidget, size)
     if not g_masterahsanyt_ESPValid(textWidget) then return end
     g_masterahsanyt_ESPGetTemplateTextStyle()
@@ -4589,7 +4601,7 @@ local function g_masterahsanyt_ESPSetFont(textWidget, size)
     end)
 end
 
--- ESP text color made by @Masterpiece2025
+-- ESP text color made by @Mansy
 local function g_masterahsanyt_ESPSetTextColor(textWidget, color)
     if not g_masterahsanyt_ESPValid(textWidget) or not color then return end
     local applied = false
@@ -4613,7 +4625,7 @@ local function g_masterahsanyt_ESPSetTextColor(textWidget, color)
     pcall(function() if textWidget.SetRenderOpacity then textWidget:SetRenderOpacity(1.0) end end)
 end
 
--- ESP line widget made by @Masterpiece2025
+-- ESP line widget made by @Mansy
 local function g_masterahsanyt_ESPCreateLine(color,parent)
     local canvas = parent or g_masterahsanyt_ESPGetCanvas()
     if not g_masterahsanyt_ESPValid(canvas) then return nil end
@@ -4645,7 +4657,7 @@ local function g_masterahsanyt_ESPCreateLine(color,parent)
     return data
 end
 
--- ESP line made by @Masterpiece2025
+-- ESP line made by @Mansy
 local function g_masterahsanyt_ESPDrawLine(data, x1, y1, x2, y2, thickness)
     if not data or not data.Widget or not data.Slot then return false end
     local dx, dy = x2-x1, y2-y1
@@ -4696,7 +4708,7 @@ local function g_masterahsanyt_ESPDrawLine(data, x1, y1, x2, y2, thickness)
     return true
 end
 
--- ESP widget hide made by @Masterpiece2025
+-- ESP widget hide made by @Mansy
 local function g_masterahsanyt_ESPHide(data)
     if data and data.Visible~=false and data.Widget then
         local ok=pcall(function() data.Widget:SetWidgetVisibility(UEnums.ESlateVisibility.Collapsed) end)
@@ -5175,7 +5187,7 @@ local function g_masterahsanyt_ESPUpdateSkeleton(key, character, pc, enabled, is
     end
 end
 
--- ESP enemy name widget made by @Masterpiece2025
+-- ESP enemy name widget made by @Mansy
 local function g_masterahsanyt_ESPCreateNameTag(isBot)
     local canvas = g_masterahsanyt_ESPGetCanvas()
     if not g_masterahsanyt_ESPValid(canvas) then return nil end
@@ -5254,7 +5266,7 @@ local function g_masterahsanyt_ESPCreateNameTag(isBot)
     return ESPWidgetPool.Tag(ESPWidgetPool.V2,"NameV2",canvas,data)
 end
 
--- ESP enemy name and distance made by @Masterpiece2025
+-- ESP enemy name and distance made by @Mansy
 local function g_masterahsanyt_ESPUpdateNameTag(key, character, headScreen, footScreen, isBot, distance, forceName, forceDistance)
     local showName = _G.g_masterahsanyt_ESPOptions.Name == true
     local showDistance = _G.g_masterahsanyt_ESPOptions.Distance == true
@@ -5391,7 +5403,7 @@ local function g_masterahsanyt_ESPUpdateNameTag(key, character, headScreen, foot
     data.ContainerVisible=true
 end
 
--- ESP enemy and bot counter HUD made by @Masterpiece2025
+-- ESP enemy and bot counter HUD made by @Mansy
 local function g_masterahsanyt_ESPCreateCounter()
     local canvas = g_masterahsanyt_ESPGetCanvas()
     if not g_masterahsanyt_ESPValid(canvas) then return nil end
@@ -5399,8 +5411,8 @@ local function g_masterahsanyt_ESPCreateCounter()
     pcall(function() container=CGame:NewObjectFromPath("/Script/UMG.CanvasPanel",canvas) end)
     if not g_masterahsanyt_ESPValid(container) then return nil end
     local currentV1=_G.LunarFeatures and _G.LunarFeatures.V1 and _G.LunarFeatures.V1.Counter
-    local displayW=currentV1 and tonumber(currentV1.Width) or 218.4
-    local displayH=currentV1 and tonumber(currentV1.Height) or 33.6
+    local displayW=currentV1 and tonumber(currentV1.Width) or 270.0
+    local displayH=currentV1 and tonumber(currentV1.Height) or 38.0
     local fontSize=currentV1 and tonumber(currentV1.FontSize) or 13
     local fontScale=currentV1 and tonumber(currentV1.FontScale) or 1.2
     local width,height,shieldH=294.0,44.0,52.0
@@ -5437,49 +5449,58 @@ local function g_masterahsanyt_ESPCreateCounter()
         return line
     end
 
-    -- True trapezoid panels: horizontal scanlines keep every sloped edge clean.
-    local panelSteps=16
-    local bandH=height/panelSteps
-    for i=1,panelSteps do
-        local y=(i-1)*bandH
-        local t=(i-0.5)/panelSteps
-        local outerInset=2.0+t*18.0
-        local innerInset=34.0-t*24.0
-        local leftRight=half-innerInset
-        local rightLeft=half+innerInset
-        local red=g_masterahsanyt_ESPScaleColor(ESP_COUNTER_RED_DARK,0.82+t*0.28,1.0)
-        local blue=g_masterahsanyt_ESPScaleColor(ESP_COUNTER_BLUE_DARK,0.92+t*0.42,1.0)
-        addRect(outerInset,y,leftRight-outerInset,bandH+0.15,red,1)
-        addRect(rightLeft,y,width-outerInset-rightLeft,bandH+0.15,blue,1)
-    end
+        -- ========================================================
+    -- 👑 PRO ESPORTS RADAR COUNTER HUD (BY MANSY GAMING) 👑
+    -- ========================================================
+    local ESP_CYAN_NEON    = g_masterahsanyt_ESPColor(0.0, 0.88, 1.0, 1.0)
+    local ESP_GOLD_NEON    = g_masterahsanyt_ESPColor(1.0, 0.80, 0.0, 1.0)
+    local ESP_RUBY_DARK    = g_masterahsanyt_ESPColor(0.24, 0.03, 0.07, 0.96)
+    local ESP_EMERALD_DARK = g_masterahsanyt_ESPColor(0.02, 0.20, 0.14, 0.96)
+    local ESP_CAPSULE_BG   = g_masterahsanyt_ESPColor(0.03, 0.05, 0.09, 0.98)
+    local ESP_DIVIDER_BG   = g_masterahsanyt_ESPColor(0.07, 0.10, 0.18, 1.0)
 
-    -- Bright polygon outlines matching the reference silhouette.
-    local lp={{2,1},{half-34,1},{half-20,height*0.66},{half-10,height},{20,height},{2,1}}
-    local rp={{width-2,1},{half+34,1},{half+20,height*0.66},{half+10,height},{width-20,height},{width-2,1}}
-    for i=1,#lp-1 do addLine(lp[i][1],lp[i][2],lp[i+1][1],lp[i+1][2],2.1,ESP_COUNTER_RED,7) end
-    for i=1,#rp-1 do addLine(rp[i][1],rp[i][2],rp[i+1][1],rp[i+1][2],2.1,ESP_COUNTER_BLUE,7) end
+    -- 1. Outer Dark Capsule Frame
+    addRect(0, 0, width, height, ESP_CAPSULE_BG, 1)
 
-    -- Independent downward center shield (not the legacy rotated diamond).
-    local shieldSteps=18
-    local shieldBand=shieldH/shieldSteps
-    for i=1,shieldSteps do
-        local y=(i-1)*shieldBand
-        local t=(i-0.5)/shieldSteps
-        local hw
-        if t<0.68 then hw=34.0-t*17.0 else hw=22.5-(t-0.68)*39.0 end
-        hw=math.max(9.0,hw)
-        addRect(half-hw,y,hw*2.0,shieldBand+0.15,ESP_COUNTER_CENTER,5)
-    end
+    -- 2. Left Wing (Real Players): Ruby Dark Panel + Glowing Crimson Edge
+    local wingW = half - 18
+    addRect(2, 2, wingW, height - 4, ESP_RUBY_DARK, 2)
+    addRect(2, 2, 4, height - 4, ESP_COUNTER_RED, 6)
+    addLine(2, height - 2, wingW + 2, height - 2, 2.0, ESP_COUNTER_RED, 7)
 
-    -- End chevrons and the white center accents/V.
-    addLine(5,5,12,height-5,4.0,ESP_COUNTER_CENTER,9)
-    addLine(12,5,19,height-5,4.0,ESP_COUNTER_RED,9)
-    addLine(width-5,5,width-12,height-5,4.0,ESP_COUNTER_CENTER,9)
-    addLine(width-12,5,width-19,height-5,4.0,ESP_COUNTER_BLUE,9)
-    addLine(half-12,5,half-7,height*0.58,4.5,ESP_REAL_LIGHT,10)
-    addLine(half+12,5,half+7,height*0.58,4.5,ESP_BOT_LIGHT,10)
-    addLine(half-11,14,half,35,6.0,ESP_WHITE,11)
-    addLine(half+11,14,half,35,6.0,ESP_WHITE,11)
+    -- 3. Right Wing (Bots): Emerald Dark Panel + Glowing Mint Edge
+    local rX = half + 18
+    addRect(rX, 2, wingW, height - 4, ESP_EMERALD_DARK, 2)
+    addRect(width - 6, 2, 4, height - 4, ESP_COUNTER_BLUE, 6)
+    addLine(rX, height - 2, width - 2, height - 2, 2.0, ESP_COUNTER_BLUE, 7)
+
+    -- 4. Center VIP Crest / Divider
+    local cW = 32
+    local cX = half - cW * 0.5
+    addRect(cX, 0, cW, height, ESP_DIVIDER_BG, 3)
+    addLine(cX, 0, cX, height, 2.0, ESP_GOLD_NEON, 8)
+    addLine(cX + cW, 0, cX + cW, height, 2.0, ESP_GOLD_NEON, 8)
+
+    -- 5. Top Neon Cyber Rail (Full Width)
+    addLine(0, 0, width, 0, 2.5, ESP_CYAN_NEON, 9)
+
+    -- 6. Center VIP Crown Icon
+    pcall(function()
+        local centerIcon = CGame:NewObjectFromPath("/Script/UMG.TextBlock", container)
+        if centerIcon and g_masterahsanyt_ESPValid(centerIcon) then
+            centerIcon:SetText("👑")
+            centerIcon:SetWidgetVisibility(UEnums.ESlateVisibility.SelfHitTestInvisible)
+            if centerIcon.SetJustification then centerIcon:SetJustification(1) end
+            local cSlot = container:AddChildToCanvas(centerIcon)
+            cSlot:SetAutoSize(true)
+            cSlot:SetAlignment(g_masterahsanyt_ESPV2(0.5, 0.5))
+            cSlot:SetPosition(g_masterahsanyt_ESPV2(half * sx, displayH * 0.5))
+            cSlot:SetZOrder(13)
+            g_masterahsanyt_ESPSetTextColor(centerIcon, ESP_GOLD_NEON)
+            g_masterahsanyt_ESPSetFont(centerIcon, fontSize + 2, 0)
+            pieces[#pieces+1] = {Widget = centerIcon, Slot = cSlot}
+        end
+    end)
 
     local function addText(initial,x,color)
         local text=nil
@@ -5505,8 +5526,8 @@ local function g_masterahsanyt_ESPCreateCounter()
         return text,slot
     end
 
-    local realText=addText("REAL: 0",half*0.5,g_masterahsanyt_ESPTheme(false).Text)
-    local botText=addText("BOT: 0",half+half*0.5,g_masterahsanyt_ESPTheme(true).Text)
+    local realText=addText("🔴 REAL: 0",(half-18)*0.5,g_masterahsanyt_ESPColor(1.0, 0.40, 0.45, 1.0))
+    local botText=addText("🤖 BOTS: 0",(half+18)+(half-18)*0.5,g_masterahsanyt_ESPColor(0.25, 1.0, 0.65, 1.0))
     if not realText or not botText then
         g_masterahsanyt_ESPDestroyWidgetData({Widget=container})
         return nil
@@ -5546,7 +5567,7 @@ local function g_masterahsanyt_ESPCreateCounter()
         Width=displayW,Height=displayH,FontSize=fontSize,FontScale=fontScale,DiamondSize=0,Pieces=pieces,ViewportAnchored=anchored}
 end
 
--- ESP counter position and tracer origin made by @Masterpiece2025
+-- ESP counter position and tracer origin made by @Mansy
 local function g_masterahsanyt_ESPUpdateCounter(realCount, botCount, pc)
 
     local data = g_masterahsanyt_ShotESP.Counter
@@ -5579,11 +5600,11 @@ local function g_masterahsanyt_ESPUpdateCounter(realCount, botCount, pc)
     local counterY = tonumber(_G.g_masterahsanyt_MasterShotESP.CounterY) or 36.0
 
     if data.LastReal ~= realCount then
-        local ok=pcall(function() data.RealText:SetText(string.format("REAL: %d", realCount or 0)) end)
+        local ok=pcall(function() data.RealText:SetText(string.format("🔴 REAL: %d", realCount or 0)) end)
         if ok then data.LastReal = realCount end
     end
     if data.LastBot ~= botCount then
-        local ok=pcall(function() data.BotText:SetText(string.format("BOT: %d", botCount or 0)) end)
+        local ok=pcall(function() data.BotText:SetText(string.format("🤖 BOTS: %d", botCount or 0)) end)
         if ok then data.LastBot = botCount end
     end
 
@@ -5611,7 +5632,7 @@ local function g_masterahsanyt_ESPUpdateCounter(realCount, botCount, pc)
     return g_masterahsanyt_ShotESP.TracerOrigin
 end
 
--- ESP enemy scan made by @Masterpiece2025
+-- ESP enemy scan made by @Mansy
 local function g_masterahsanyt_ESPScanEnemies()
     local pc = g_masterahsanyt_ESPGetController()
     local me = g_masterahsanyt_ESPGetLocalCharacter()
@@ -5655,7 +5676,7 @@ local function g_masterahsanyt_ESPScanEnemies()
     return pc, realCount, botCount
 end
 
--- ESP stale widget cleanup made by @Masterpiece2025
+-- ESP stale widget cleanup made by @Mansy
 local function g_masterahsanyt_ESPPrune(active,alive)
     -- Visual caches follow the displayed set. Counting metadata follows alive.
     -- Move header children into their actor-free parent bundle before pruning
@@ -5689,7 +5710,7 @@ ESPShared.Events.Clearers[#ESPShared.Events.Clearers+1]=function(actor)
     ESPShared.Events.ClearIn(g_masterahsanyt_ShotESP,g_masterahsanyt_ESPPrune,actor)
 end
 
--- ESP main HUD update made by @Masterpiece2025
+-- ESP main HUD update made by @Mansy
 local function g_masterahsanyt_ESPUpdate()
     local opt = _G.g_masterahsanyt_ESPOptions
     local anyEnabled = opt and (opt.Name or opt.Line or opt.Box or opt.Health or opt.Distance or opt.Skeleton or opt.Counter)
@@ -7156,28 +7177,28 @@ local function g_Botmater_ESPColor(r, g, b, a)
     return {R=r, G=g, B=b, A=a or 1.0}
 end
 
-local COLOR_REAL_VIS_RED          = g_Botmater_ESPColor(1.00, 0.00, 0.00, 1.00)
-local COLOR_BOT_VIS_CYAN          = g_Botmater_ESPColor(0.10, 1.00, 1.00, 1.00)
+local COLOR_REAL_VIS_RED          = g_Botmater_ESPColor(1.00, 0.16, 0.28, 1.00)
+local COLOR_BOT_VIS_CYAN          = g_Botmater_ESPColor(0.00, 0.92, 0.80, 1.00)
 
 local COLOR_TEXT_WHITE            = g_Botmater_ESPColor(1.00, 1.00, 1.00, 1.00)
 local COLOR_TEXT_BLACK            = g_Botmater_ESPColor(0.00, 0.00, 0.00, 1.00)
 
 
-local CACHE_COUNTER_PLAYER_BG   = g_Botmater_ESPColor(0.07, 0.008, 0.008, 1.0)
-local CACHE_COUNTER_BOT_BG      = g_Botmater_ESPColor(0.008, 0.07, 0.07, 1.0)
-local CACHE_COUNTER_PLAYER_TEXT = g_Botmater_ESPColor(1.0,0.86,0.84,1.0)
-local CACHE_COUNTER_BOT_TEXT    = g_Botmater_ESPColor(0.82,1.0,1.0,1.0)
+local CACHE_COUNTER_PLAYER_BG   = g_Botmater_ESPColor(0.16, 0.02, 0.05, 0.96)
+local CACHE_COUNTER_BOT_BG      = g_Botmater_ESPColor(0.02, 0.13, 0.11, 0.96)
+local CACHE_COUNTER_PLAYER_TEXT = g_Botmater_ESPColor(1.0, 0.88, 0.90, 1.0)
+local CACHE_COUNTER_BOT_TEXT    = g_Botmater_ESPColor(0.85, 1.0, 0.96, 1.0)
 
 
 local COLOR_HP = {
-    RealText=g_Botmater_ESPColor(1.0,0.86,0.84,1.0),
-    BotText=g_Botmater_ESPColor(0.82,1.0,1.0,1.0),
-    RealMid=g_Botmater_ESPColor(0.78,0.0,0.0,1.0),
-    RealLow=g_Botmater_ESPColor(0.55,0.0,0.0,1.0),
-    BotMid=g_Botmater_ESPColor(0.075,0.75,0.75,1.0),
-    BotLow=g_Botmater_ESPColor(0.055,0.55,0.55,1.0),
-    RealBG=g_Botmater_ESPColor(0.06,0.005,0.005,0.75),
-    BotBG=g_Botmater_ESPColor(0.005,0.06,0.06,0.75)}
+    RealText=g_Botmater_ESPColor(1.0,0.90,0.92,1.0),
+    BotText=g_Botmater_ESPColor(0.85,1.0,0.96,1.0),
+    RealMid=g_Botmater_ESPColor(1.0,0.55,0.15,1.0),
+    RealLow=g_Botmater_ESPColor(0.85,0.08,0.18,1.0),
+    BotMid=g_Botmater_ESPColor(0.0,0.72,0.65,1.0),
+    BotLow=g_Botmater_ESPColor(0.0,0.48,0.45,1.0),
+    RealBG=g_Botmater_ESPColor(0.04,0.015,0.025,0.88),
+    BotBG=g_Botmater_ESPColor(0.015,0.04,0.05,0.88)}
 
 -- Ensure old in-memory options do not retain the tiny shipped label fonts.
 _G.g_Botmater_MasterShotESP.NameFontSize=math.max(12,tonumber(_G.g_Botmater_MasterShotESP.NameFontSize) or 12)
@@ -7907,8 +7928,8 @@ local g_Botmater_EnemyCounter = {
     BotBG = nil,
     PlayerText = nil,
     BotText = nil,
-    Width = 218.4,
-    Height = 33.6,
+    Width = 270.0,
+    Height = 38.0,
     OffsetY = 22.5, -- If V2 counter is visible, shift V1 down to avoid overlap.
     FontSize = 13,
     FontScale = 1.2, -- Exact 20% glyph growth; native font Size is an integer.
@@ -7978,8 +7999,8 @@ local function g_Botmater_CounterCreate()
     end)
 
     pcall(function()
-        PlayerText:SetText("REAL: 0")
-        BotText:SetText("BOT: 0")
+        PlayerText:SetText("🔴 REAL: 0")
+        BotText:SetText("🤖 BOTS: 0")
         g_masterahsanyt_ESPSetFont(PlayerText,g_Botmater_EnemyCounter.FontSize,0)
         g_masterahsanyt_ESPSetFont(BotText,g_Botmater_EnemyCounter.FontSize,0)
         local scale=g_Botmater_EnemyCounter.FontScale
@@ -10067,6 +10088,7 @@ end)
 pcall(function() if _G.InitializeSkinBypass then _G.InitializeSkinBypass() end end)
 
 _G.BRSkinUpdate = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return end
     pcall(function()
         local GDP = GameplayData
         local localPlayer = GDP and GDP.GetLocalCharacter and GDP.GetLocalCharacter()
@@ -10206,6 +10228,7 @@ end
 
 
 _G.BRStartSkinLoop = function()
+    if not (_G.LunarLoginRuntime and _G.LunarLoginRuntime.Authorized) then return end
     _G.__BR_SkinTimer = nil
     pcall(function()
         if _G.Game and _G.Game.AddGameTimer then
